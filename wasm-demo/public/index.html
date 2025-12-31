@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>OpenCC WASM Demo</title>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 40px auto; }
+    pre { background: #f7f7f7; padding: 12px; }
+  </style>
+</head>
+<body>
+  <h1>OpenCC WASM Demo</h1>
+  <button id="run">Call hello()</button>
+  <pre id="output">Waiting...</pre>
+
+  <script type="module">
+    import createOpenCCWasm from "../dist/opencc-wasm.js";
+
+    const output = document.getElementById("output");
+    document.getElementById("run").onclick = async () => {
+      output.textContent = "Loading WASM...";
+      const Module = await createOpenCCWasm();
+      const hello = Module.cwrap("hello", "string", []);
+      output.textContent = hello();
+    };
+  </script>
+</body>
+</html>
