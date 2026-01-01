@@ -36,7 +36,7 @@ if (fs.existsSync(ocjsSrc)) {
 }
 
 // copy demo assets
-const filesToCopy = ["index.html", "public-api.html", "benchmark.html", "testcases.json"];
+const filesToCopy = ["index.html", "public-api.html", "classic.html", "benchmark.html", "testcases.json"];
 for (const file of filesToCopy) {
   const src = path.join(demoRoot, file);
   if (fs.existsSync(src)) {
