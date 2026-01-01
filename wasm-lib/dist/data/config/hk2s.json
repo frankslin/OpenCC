@@ -1,5 +1,12 @@
 {
   "name": "Traditional Chinese (Hong Kong variant) to Simplified Chinese",
+  "description_zh": "香港繁體到簡體",
+  "examples": [
+    {"input": "滑鼠", "output": "鼠标"},
+    {"input": "軟件", "output": "软件"},
+    {"input": "資訊", "output": "信息"},
+    {"input": "裏", "output": "里"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {

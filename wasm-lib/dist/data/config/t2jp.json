@@ -1,5 +1,11 @@
 {
   "name": "Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai)",
+  "description_zh": "繁體（舊字體）到日文新字體",
+  "examples": [
+    {"input": "國", "output": "国"},
+    {"input": "學", "output": "学"},
+    {"input": "會", "output": "会"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {

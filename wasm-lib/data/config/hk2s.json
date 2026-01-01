@@ -1,5 +1,11 @@
 {
   "name": "Traditional Chinese (Hong Kong variant) to Simplified Chinese",
+  "description_zh": "香港繁體到簡體",
+  "examples": [
+    {"input": "軟件", "output": "软件"},
+    {"input": "資訊", "output": "资讯"},
+    {"input": "裏", "output": "里"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {
@@ -16,7 +22,7 @@
       }, {
         "type": "ocd2",
         "file": "HKVariantsRev.ocd2"
-      }] 
+      }]
     }
   }, {
     "dict": {
