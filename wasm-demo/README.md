@@ -6,7 +6,7 @@
 - 先在 `wasm-demo` 根目錄執行 `npm install`，確認本目錄的 `node_modules/opencc-wasm` 可用。
 
 ## 檔案概覽
-- `index.html`：新版經典介面（類似 byvoid.opencc.com），按鈕式選原文／目標／異體字／地域用詞，動態載入設定與 `.ocd2`（寫入 `/data/config`、`/data/dict`），內建測試入口、複製、快捷鍵等。
+- `index.html`：新版經典介面（類似 https://opencc.byvoid.com/ ），按鈕式選原文／目標／異體字／地域用詞，動態載入設定與 `.ocd2`（寫入 `/data/config`、`/data/dict`），內建測試入口、複製、快捷鍵等。
 - `wasm.html`：早期的 WASM API 示範頁，直接呼叫 `opencc_create/opencc_convert`，可手動載入設定並跑測試。
 - `public-api.html`：使用 `opencc-wasm` 提供的 opencc-js 相容 API 的示範頁，方便對照官方 JS API。
 - `benchmark.html`：效能對比頁（WASM vs opencc-js，需本機有 opencc-js 才會載入；WASM 重點在行為一致性而非效能）。
