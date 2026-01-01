@@ -1,0 +1,14 @@
+{
+  "name": "wasm-demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "opencc-wasm": "file:../wasm-lib",
+    "opencc-js": "^1.0.5"
+  },
+  "scripts": {
+    "prepare:assets": "node scripts/prepare.js",
+    "build": "npm run prepare:assets && node build.js"
+  }
+}
