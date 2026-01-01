@@ -17,6 +17,15 @@ const outRoot = path.join(demoRoot, "dist");
 const vendorOut = path.join(outRoot, "vendor", "opencc-wasm");
 const vendorJsOut = path.join(outRoot, "vendor", "opencc-js");
 
+// Get current date in YYYY-MM-DD format
+function getBuildDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 if (!fs.existsSync(pkgRoot)) {
   console.error("opencc-wasm not found. Run `npm install` in wasm-demo first.");
   process.exit(1);
@@ -35,14 +44,23 @@ if (fs.existsSync(ocjsSrc)) {
   fs.cpSync(ocjsSrc, vendorJsOut, { recursive: true });
 }
 
-// copy demo assets
+// copy demo assets with build date injection
+const buildDate = getBuildDate();
 const filesToCopy = ["index.html", "public-api.html", "classic.html", "benchmark.html", "testcases.json"];
 for (const file of filesToCopy) {
   const src = path.join(demoRoot, file);
   if (fs.existsSync(src)) {
     const dst = path.join(outRoot, path.basename(file));
-    fs.copyFileSync(src, dst);
+
+    // For HTML files, replace __BUILD_DATE__ placeholder
+    if (file.endsWith('.html')) {
+      let content = fs.readFileSync(src, 'utf8');
+      content = content.replace(/__BUILD_DATE__/g, buildDate);
+      fs.writeFileSync(dst, content, 'utf8');
+    } else {
+      fs.copyFileSync(src, dst);
+    }
   }
 }
 
-console.log("Demo bundle ready in wasm-demo/dist/");
+console.log(`Demo bundle ready in wasm-demo/dist/ (build date: ${buildDate})`);
