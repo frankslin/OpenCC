@@ -1,6 +1,7 @@
 # opencc-wasm
 
 This package provides a WebAssembly backend for OpenCC, fully compatible with the `opencc-js` public API. It bundles the OpenCC C++ core (plus marisa) compiled via Emscripten, plus the official OpenCC configs and prebuilt `.ocd2` dictionaries (placed under `dist/data/` at build time).
+License: Apache-2.0 (see LICENSE).
 
 ## Features
 - Same API surface as `opencc-js`: `OpenCC.Converter`, `CustomConverter`, `ConverterFactory`, and locale presets.
@@ -54,3 +55,4 @@ Runs the upstream OpenCC testcases (converted to JSON) against the WASM build.
 - Internally uses persistent OpenCC handles (`opencc_create/convert/destroy`) to avoid reloading configs.
 - Dictionaries are written under `/data/dict/` in the virtual FS; configs under `/data/config/`. Paths inside configs are rewritten automatically.
 - Memory grows on demand (`ALLOW_MEMORY_GROWTH=1`); no native dependencies needed.
+- Performance note: opencc-wasm focuses on fidelity and compatibility (uses official configs and `.ocd2`, matches Node OpenCC output 1:1). Raw throughput can be slower than pure JS implementations like `opencc-js`, but the WASM version guarantees full OpenCC behavior and config coverage.

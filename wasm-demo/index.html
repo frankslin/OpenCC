@@ -144,8 +144,23 @@
   </div>
 
   <script type="module">
-    // 通过已构建好的 npm 包使用 WASM（假设本目录下已安装 opencc-wasm）
-    import createOpenCCWasm from "./node_modules/opencc-wasm/dist/opencc-wasm.js";
+    let cachedFactory = null;
+    let vendorBase = null; // 解析后的绝对 base
+    async function loadWasmFactory() {
+      if (cachedFactory) return cachedFactory;
+      let lastErr = null;
+      try {
+        const baseUrl = new URL("./vendor/opencc-wasm/", window.location.href).href;
+        const url = new URL("opencc-wasm.js", baseUrl).href;
+        const mod = await import(url);
+        vendorBase = baseUrl;
+        cachedFactory = mod.default;
+        return cachedFactory;
+      } catch (e) {
+        lastErr = e;
+      }
+      throw lastErr || new Error("cannot resolve vendor path");
+    }
 
     let Module = null;
     let Api = null;
@@ -155,6 +170,7 @@
     const readableNames = new Map(); // configName -> readable name
     const initModule = async () => {
       if (!Module) {
+        const createOpenCCWasm = await loadWasmFactory();
         Module = await createOpenCCWasm();
       }
       if (!Api) {
@@ -226,7 +242,8 @@
         try { mod.FS.mkdir("/data/config"); } catch (e) {}
         try { mod.FS.mkdir("/data/dict"); } catch (e) {}
 
-        const cfgUrl = `./node_modules/opencc-wasm/data/config/${cfgName}`;
+        const base = vendorBase || new URL("./vendor/opencc-wasm/", window.location.href).href;
+        const cfgUrl = `${base}data/config/${cfgName}`;
         const cfgResp = await fetch(cfgUrl);
         if (!cfgResp.ok) throw new Error(`${cfgUrl} -> HTTP ${cfgResp.status}`);
         const cfgJson = await cfgResp.json();
@@ -238,7 +255,7 @@
 
         const written = [`/data/config/${cfgName}`];
         for (const file of dicts) {
-          const url = `./node_modules/opencc-wasm/data/dict/${file}`;
+          const url = `${base}data/dict/${file}`;
           if (!loadedDicts.has(file)) {
             const resp = await fetch(url);
             if (!resp.ok) throw new Error(`${url} -> HTTP ${resp.status}`);

@@ -24,13 +24,16 @@ const dataDst = path.join(dist, "data");
 if (fs.existsSync(dataDst)) fs.rmSync(dataDst, { recursive: true, force: true });
 fs.cpSync(dataSrc, dataDst, { recursive: true });
 
-// Source API (ESM)
+// Source API (ESM) with locateFile override for wasm/worker
 const srcApiPath = path.join(root, "index.js");
 let apiSource = fs.readFileSync(srcApiPath, "utf-8");
-// Adjust BASE_URL and wasm import path to be relative to dist/esm/
 apiSource = apiSource.replace(
   'const BASE_URL = new URL("./", import.meta.url);',
   'const BASE_URL = new URL("../", import.meta.url);'
+);
+apiSource = apiSource.replace(
+  "const { default: create } = await import(wasmUrl.href);",
+  "const { default: create } = await import(wasmUrl.href); modulePromise = create({ locateFile: (p) => new URL(p, wasmUrl).href }); return modulePromise;"
 );
 apiSource = apiSource.replace(
   './dist/opencc-wasm.js',

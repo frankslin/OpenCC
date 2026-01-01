@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenCC WASM 公共 API 演示</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #38bdf8;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 17px;
+      background: radial-gradient(circle at 10% 20%, rgba(56,189,248,0.08), transparent 25%),
+                  radial-gradient(circle at 80% 0%, rgba(14,165,233,0.08), transparent 20%),
+                  var(--bg);
+      color: var(--text);
+      max-width: 820px;
+      margin: 40px auto;
+      padding: 0 16px 60px;
+    }
+    h1 { font-size: 30px; margin-bottom: 12px; }
+    h2 { margin-top: 28px; font-size: 22px; }
+    p  { color: var(--muted); line-height: 1.6; }
+    pre {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+    }
+    label { display: block; margin-top: 12px; color: var(--muted); font-size: 13px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0b1221;
+      color: var(--text);
+      margin-top: 6px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 12px 14px;
+      background: linear-gradient(90deg, #22d3ee, #0ea5e9);
+      border: none;
+      border-radius: 10px;
+      color: #0b1221;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+    }
+    button:hover { box-shadow: 0 8px 24px rgba(14,165,233,0.35); }
+    button:active { transform: translateY(1px); }
+    #configButtons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    #configButtons button {
+      background: #1d283a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 8px;
+      min-width: 90px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-top: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(6px);
+    }
+    @media (max-width: 640px) {
+      body { margin: 20px auto; padding: 0 12px 40px; font-size: 16px; }
+      h1 { font-size: 24px; }
+      h2 { font-size: 20px; }
+      .card { padding: 16px; }
+      button { width: 100%; font-size: 16px; }
+      #configButtons { gap: 8px; }
+      #configButtons button { flex: 1 1 45%; font-size: 15px; }
+      .copy-btn { width: auto; min-width: 56px; padding: 8px 10px; font-size: 15px; }
+    }
+    .copy-btn {
+      background: #1d283a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      min-width: 64px;
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>OpenCC WASM 公共 API 演示</h1>
+  <div class="card">
+    <h2>选择配置</h2>
+    <p>使用 npm 包 <code>opencc-wasm</code> 提供的 opencc-js 兼容 API。点击配置名后自动加载对应字典。</p>
+    <div id="configButtons"></div>
+  </div>
+
+  <div class="card">
+    <h2>文本转换</h2>
+    <label for="configName">当前配置</label>
+    <input id="configName" type="text" placeholder="尚未选择配置" />
+    <label for="textInput">待转换文本</label>
+    <input id="textInput" type="text" placeholder="汉字" />
+    <button id="runConvert" disabled>执行转换</button>
+    <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+      <pre id="convertOutput" style="flex:1; margin:0;"></pre>
+      <button id="copyOutput" class="copy-btn">复制</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>日志 / 结果</h2>
+    <pre id="logOutput"></pre>
+  </div>
+
+  <script type="module">
+    let OpenCC = null;
+    async function loadApi() {
+      if (OpenCC) return OpenCC;
+      let lastErr = null;
+      try {
+        const baseUrl = new URL("./vendor/opencc-wasm/", window.location.href).href;
+        const url = new URL("esm/index.js", baseUrl).href;
+        const mod = await import(url);
+        OpenCC = mod.default;
+        return OpenCC;
+      } catch (e) {
+        lastErr = e;
+      }
+      throw lastErr || new Error("cannot resolve vendor path");
+    }
+
+    const configFiles = [
+      "hk2s.json", "hk2t.json", "jp2t.json", "s2hk.json", "s2t.json", "s2twp.json",
+      "s2tw.json", "t2hk.json", "t2jp.json", "t2s.json", "t2tw.json",
+      "tw2s.json", "tw2t.json", "tw2sp.json"
+    ];
+
+    const btnContainer = document.getElementById("configButtons");
+    const log = document.getElementById("logOutput");
+    const nameInput = document.getElementById("configName");
+    const runBtn = document.getElementById("runConvert");
+    let currentConvert = null;
+
+    const setReady = (name, converter) => {
+      nameInput.value = name;
+      runBtn.disabled = false;
+      currentConvert = converter;
+      document.getElementById("textInput").focus();
+    };
+
+    btnContainer.innerHTML = "";
+    configFiles.forEach((name) => {
+      const btn = document.createElement("button");
+      btn.textContent = name;
+      btn.onclick = async () => {
+        runBtn.disabled = true;
+        log.textContent = `加载配置 ${name} 中...`;
+        try {
+          const api = await loadApi();
+          // opencc-js 兼容 API：传 config 文件名即可
+          const converter = api.Converter({ config: name });
+          await converter("预热"); // 触发加载
+          const cfgPath = `vendor/opencc-wasm/data/config/${name}`;
+          setReady(name, converter);
+          log.textContent = `配置已加载：${name}\n(路径: ${cfgPath})`;
+        } catch (e) {
+          log.textContent = "加载失败: " + e;
+        }
+      };
+      btnContainer.appendChild(btn);
+    });
+
+    document.getElementById("runConvert").onclick = async () => {
+      if (!currentConvert) return;
+      const text = document.getElementById("textInput").value || "汉字";
+      document.getElementById("convertOutput").textContent = await currentConvert(text);
+    };
+
+    document.getElementById("copyOutput").onclick = async () => {
+      const text = document.getElementById("convertOutput").textContent;
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById("copyOutput");
+        const old = btn.textContent;
+        btn.textContent = "已复制";
+        setTimeout(() => (btn.textContent = old), 1200);
+      } catch (err) {
+        alert("复制失败: " + err);
+      }
+    };
+  </script>
+</body>
+</html>

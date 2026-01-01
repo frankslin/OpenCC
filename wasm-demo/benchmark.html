@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenCC WASM vs opencc-js Benchmark</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; }
+    textarea { width: 100%; height: 140px; font-size: 14px; padding: 10px; }
+    button { padding: 10px 14px; margin-top: 10px; }
+    pre { background: #f7f7f7; padding: 12px; border: 1px solid #ddd; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>OpenCC WASM vs opencc-js Benchmark</h1>
+  <p>输入需要转换的文本（建议较长），选择配置后比较两者耗时。</p>
+
+  <label>配置（如 s2t.json）</label>
+  <input id="configName" value="s2t.json" style="width: 100%; padding: 8px; margin-bottom: 8px;" />
+
+  <label>输入文本</label>
+  <textarea id="inputText">鼠标里面的硅二极管坏了，导致光标分辨率降低。</textarea>
+
+  <button id="run">运行 Benchmark</button>
+
+  <h3>结果</h3>
+  <pre id="output"></pre>
+
+  <script type="module">
+    import OpenCCWasm from "./vendor/opencc-wasm/esm/index.js";
+
+    // 动态加载 opencc-js（仅从本地 vendor，未安装则给出提示）
+    async function loadOpenCCJS() {
+      const candidates = [
+        "./vendor/opencc-js/esm/full.js",
+        "./wasm-demo/vendor/opencc-js/esm/full.js"
+      ];
+      let lastErr = null;
+      for (const url of candidates) {
+        try {
+          const mod = await import(new URL(url, window.location.href).href);
+          const api = mod.default || mod.OpenCC || mod;
+          if (!api?.Converter) throw new Error("Converter not found in opencc-js module");
+          return api;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error("opencc-js not available");
+    }
+
+    document.getElementById("run").onclick = async () => {
+      const cfg = document.getElementById("configName").value.trim();
+      const text = document.getElementById("inputText").value;
+      const out = document.getElementById("output");
+      if (!cfg) {
+        out.textContent = "配置不能为空";
+        return;
+      }
+
+      const lines = [];
+      lines.push(`输入长度: ${text.length} 字符`);
+
+      // WASM
+      try {
+        const tLoad0 = performance.now();
+        const wasmConv = OpenCCWasm.Converter({ config: cfg });
+        await wasmConv("预热");
+        const tLoad1 = performance.now();
+        const runs = [];
+        let wasmResult = "";
+        for (let i = 0; i < 5; i++) {
+          const t0 = performance.now();
+          wasmResult = await wasmConv(text);
+          const t1 = performance.now();
+          runs.push(t1 - t0);
+        }
+        const avg = runs.reduce((a, b) => a + b, 0) / runs.length;
+        lines.push(`WASM 加载: ${(tLoad1 - tLoad0).toFixed(2)} ms，转换(5次): ${runs.map(n => n.toFixed(2)).join(", ")} ms，平均: ${avg.toFixed(2)} ms`);
+        lines.push(`WASM 输出: ${wasmResult}`);
+      } catch (e) {
+        lines.push("WASM 失败: " + e);
+      }
+
+      // JS（仅支持部分 from/to 映射）
+      const configToLocale = {
+        "s2t.json": { from: "cn", to: "t" },
+        "t2s.json": { from: "t", to: "cn" },
+      };
+      if (configToLocale[cfg]) {
+        try {
+          const tLoad0 = performance.now();
+          const OpenCCJS = await loadOpenCCJS();
+          const jsConv = OpenCCJS.Converter(configToLocale[cfg]);
+          const tLoad1 = performance.now();
+          const runs = [];
+          let jsResult = "";
+          for (let i = 0; i < 5; i++) {
+            const t0 = performance.now();
+            jsResult = jsConv(text);
+            const t1 = performance.now();
+            runs.push(t1 - t0);
+          }
+          const avg = runs.reduce((a, b) => a + b, 0) / runs.length;
+          lines.push(`opencc-js 加载: ${(tLoad1 - tLoad0).toFixed(2)} ms，转换(5次): ${runs.map(n => n.toFixed(2)).join(", ")} ms，平均: ${avg.toFixed(2)} ms`);
+          lines.push(`opencc-js 输出: ${jsResult}`);
+        } catch (e) {
+          lines.push("opencc-js 运行失败: " + e);
+        }
+      } else {
+        lines.push("opencc-js 仅示例对比 s2t.json / t2s.json，其它配置暂不对比。");
+      }
+
+      out.textContent = lines.join("\n");
+    };
+  </script>
+</body>
+</html>

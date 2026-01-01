@@ -4,19 +4,27 @@
 //  - data/config/*.json
 //  - data/dict/*.ocd2
 
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
+// Optional Node helpers (guarded for browser)
+let fsMod = null;
+let fileURLToPathFn = null;
+const hasNode = typeof process !== "undefined" && !!process.versions?.node;
+if (hasNode) {
+  fsMod = await import("node:fs");
+  ({ fileURLToPath: fileURLToPathFn } = await import("node:url"));
+}
 
 const BASE_URL = new URL("./", import.meta.url);
 
 const readFileText = (url) => {
-  const path = fileURLToPath(url);
-  return fs.readFileSync(path, "utf-8");
+  if (!fsMod || !fileURLToPathFn) throw new Error("fs not available in this environment");
+  const path = fileURLToPathFn(url);
+  return fsMod.readFileSync(path, "utf-8");
 };
 
 const readFileBuffer = (url) => {
-  const path = fileURLToPath(url);
-  return fs.readFileSync(path);
+  if (!fsMod || !fileURLToPathFn) throw new Error("fs not available in this environment");
+  const path = fileURLToPathFn(url);
+  return fsMod.readFileSync(path);
 };
 
 // 预设映射：from -> to -> config 文件名
@@ -36,11 +44,23 @@ let modulePromise = null;
 let api = null;
 
 async function getModule() {
-  if (!modulePromise) {
-    const wasmUrl = new URL("./dist/opencc-wasm.js", BASE_URL);
-    const { default: create } = await import(wasmUrl.href);
-    modulePromise = create();
-  }
+  if (modulePromise) return modulePromise;
+
+  // 1) 先确定包根目录（一定要以 / 结尾）
+  const pkgBase = new URL("../", import.meta.url); 
+  // 如果这段代码在 HTML inline script 里，没有 import.meta.url，那就用绝对路径：
+  // const pkgBase = new URL("/vendor/opencc-wasm/", window.location.origin);
+
+  // 2) import glue
+  const glueUrl = new URL("opencc-wasm.js", pkgBase);
+
+  const { default: create } = await import(glueUrl.href);
+
+  // 3) locateFile 必须相对 pkgBase，而不是 glueUrl
+  modulePromise = create({
+    locateFile: (p) => new URL(p, pkgBase).href
+  });
+
   return modulePromise;
 }
 
