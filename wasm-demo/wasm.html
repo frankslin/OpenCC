@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenCC 浏览器演示</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #38bdf8;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 17px;
+      background: radial-gradient(circle at 10% 20%, rgba(56,189,248,0.08), transparent 25%),
+                  radial-gradient(circle at 80% 0%, rgba(14,165,233,0.08), transparent 20%),
+                  var(--bg);
+      color: var(--text);
+      max-width: 820px;
+      margin: 40px auto;
+      padding: 0 16px 60px;
+    }
+    h1 { font-size: 30px; margin-bottom: 12px; }
+    h2 { margin-top: 28px; font-size: 22px; }
+    p  { color: var(--muted); line-height: 1.6; }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(56,189,248,0.6);
+      padding-bottom: 1px;
+    }
+    a:hover {
+      color: #67e8f9;
+      border-bottom-color: #67e8f9;
+    }
+    pre {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+    }
+    label { display: block; margin-top: 12px; color: var(--muted); font-size: 13px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0b1221;
+      color: var(--text);
+      margin-top: 6px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 12px 14px;
+      background: linear-gradient(90deg, #22d3ee, #0ea5e9);
+      border: none;
+      border-radius: 10px;
+      color: #0b1221;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+    }
+    button:hover { box-shadow: 0 8px 24px rgba(14,165,233,0.35); }
+    button:active { transform: translateY(1px); }
+    #configButtons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    #configButtons button {
+      background: #1d283a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 8px;
+      min-width: 90px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-top: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(6px);
+    }
+    @media (max-width: 640px) {
+      body { margin: 20px auto; padding: 0 12px 40px; font-size: 16px; }
+      h1 { font-size: 24px; }
+      h2 { font-size: 20px; }
+      .card { padding: 16px; }
+      button { width: 100%; font-size: 16px; }
+      #configButtons { gap: 8px; }
+      #configButtons button { flex: 1 1 45%; font-size: 15px; }
+      .copy-btn { width: auto; min-width: 56px; padding: 8px 10px; font-size: 15px; }
+    }
+    .copy-btn {
+      background: #1d283a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      min-width: 64px;
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>OpenCC WASM 库 用法演示</h1>
+  <div class="card">
+    <h2>加载配置与词典</h2>
+    <p>点击配置名，自动解析 JSON，按需拉取其中引用的 <code>.ocd2</code> 并写入 WASM 虚拟文件系统的 <code>/data/config/</code>。<a href="https://github.com/BYVoid/OpenCC/tree/master/data/config" target="_blank">配置文件</a>；OpenCC OCD2 字典为<a href="https://github.com/BYVoid/OpenCC/tree/master/data/dictionary" target="_blank">原始 TXT 文件</a>编译产物。</p>
+    <div id="configButtons"></div>
+  </div>
+
+  <div class="card">
+    <h2>文本转换</h2>
+    <label for="configPath">配置名称</label>
+    <input id="configPath" type="text" placeholder="尚未选择配置" />
+    <label for="textInput">待转换文本</label>
+    <input id="textInput" type="text" placeholder="汉字" />
+    <button id="runConvert" disabled>执行转换</button>
+    <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+      <pre id="convertOutput" style="flex:1; margin:0;"></pre>
+      <button id="copyOutput" class="copy-btn">复制</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>运行 OpenCC 测试用例</h2>
+    <p>读取 <code>/public/testcases.json</code>，自动加载配置与词典并逐条校验。<a href="https://github.com/BYVoid/OpenCC/tree/master/test/testcases" target="_blank">测试用例来源</a></p>
+    <button id="runTests">运行测试</button>
+  </div>
+
+  <div class="card">
+    <h2>日志 / 结果</h2>
+    <pre id="logOutput"></pre>
+  </div>
+
+  <script type="module">
+    let cachedFactory = null;
+    let vendorBase = null; // 解析后的绝对 base
+    async function loadWasmFactory() {
+      if (cachedFactory) return cachedFactory;
+      let lastErr = null;
+      try {
+        const baseUrl = new URL("./vendor/opencc-wasm/", window.location.href).href;
+        const url = new URL("opencc-wasm.js", baseUrl).href;
+        const mod = await import(url);
+        vendorBase = baseUrl;
+        cachedFactory = mod.default;
+        return cachedFactory;
+      } catch (e) {
+        lastErr = e;
+      }
+      throw lastErr || new Error("cannot resolve vendor path");
+    }
+
+    let Module = null;
+    let Api = null;
+    const handles = new Map(); // configName -> handle id
+    const loadedConfigs = new Set(); // 已经写入 FS 的配置/词典
+    const loadedDicts = new Set();   // 已写入的 ocd2 文件
+    const readableNames = new Map(); // configName -> readable name
+    const initModule = async () => {
+      if (!Module) {
+        const createOpenCCWasm = await loadWasmFactory();
+        Module = await createOpenCCWasm();
+      }
+      if (!Api) {
+        Api = {
+          create: Module.cwrap("opencc_create", "number", ["string"]),
+          convert: Module.cwrap("opencc_convert", "string", ["number", "string"]),
+          destroy: Module.cwrap("opencc_destroy", null, ["number"]),
+        };
+      }
+      return Module;
+    };
+
+    document.getElementById("runConvert").onclick = async () => {
+      const mod = await initModule();
+      const cfgInput = document.getElementById("configPath");
+      const cfg = cfgInput.dataset.path;
+      const handle = Number(cfgInput.dataset.handle || 0);
+      const ready = cfgInput.dataset.ready === "1";
+      if (!cfg) {
+        document.getElementById("convertOutput").textContent = "请选择配置后再转换";
+        return;
+      }
+      if (!ready) {
+        document.getElementById("convertOutput").textContent = "词典未加载成功，无法转换";
+        return;
+      }
+      if (!handle) {
+        document.getElementById("convertOutput").textContent = "转换句柄未就绪";
+        return;
+      }
+      const text = document.getElementById("textInput").value || "汉字";
+      document.getElementById("convertOutput").textContent = Api.convert(handle, text);
+    };
+
+    // 解析配置 JSON，收集 ocd2 文件
+    const collectOcd2Files = (dictNode, acc) => {
+      if (!dictNode || typeof dictNode !== "object") return;
+      if (dictNode.type === "ocd2" && dictNode.file) {
+        acc.add(dictNode.file);
+      }
+      if (dictNode.type === "group" && Array.isArray(dictNode.dicts)) {
+        dictNode.dicts.forEach(d => collectOcd2Files(d, acc));
+      }
+    };
+
+    const loadConfigAndDicts = async (cfgName) => {
+      // 已加载则直接复用句柄，避免重复写入与重复占用内存
+      if (handles.has(cfgName) && loadedConfigs.has(cfgName)) {
+        const cfgPath = `/data/config/${cfgName}`;
+        const cfgInput = document.getElementById("configPath");
+        const label = readableNames.get(cfgName) || cfgName;
+        cfgInput.value = label;
+        cfgInput.dataset.path = cfgPath;
+        cfgInput.dataset.handle = String(handles.get(cfgName));
+        cfgInput.dataset.ready = "1";
+        document.getElementById("runConvert").disabled = false;
+        document.getElementById("logOutput").textContent = `已缓存：${label}`;
+        return handles.get(cfgName);
+      }
+      const mod = await initModule();
+      const out = document.getElementById("logOutput");
+      if (!mod.FS || !mod.FS.writeFile) {
+        out.textContent = "FS not available; ensure build with -s FORCE_FILESYSTEM=1";
+        throw new Error("FS not available");
+      }
+      try {
+        out.textContent = `Fetching ${cfgName}...`;
+        try { mod.FS.mkdir("/data"); } catch (e) {}
+        try { mod.FS.mkdir("/data/config"); } catch (e) {}
+        try { mod.FS.mkdir("/data/dict"); } catch (e) {}
+
+        const base = vendorBase || new URL("./vendor/opencc-wasm/", window.location.href).href;
+        const cfgUrl = `${base}data/config/${cfgName}`;
+        const cfgResp = await fetch(cfgUrl);
+        if (!cfgResp.ok) throw new Error(`${cfgUrl} -> HTTP ${cfgResp.status}`);
+        const cfgJson = await cfgResp.json();
+        const dicts = new Set();
+        collectOcd2Files(cfgJson.segmentation?.dict, dicts);
+        if (Array.isArray(cfgJson.conversion_chain)) {
+          cfgJson.conversion_chain.forEach(item => collectOcd2Files(item?.dict, dicts));
+        }
+
+        const written = [`/data/config/${cfgName}`];
+        for (const file of dicts) {
+          const url = `${base}data/dict/${file}`;
+          if (!loadedDicts.has(file)) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`${url} -> HTTP ${resp.status}`);
+            const buf = new Uint8Array(await resp.arrayBuffer());
+            mod.FS.writeFile(`/data/dict/${file}`, buf);
+            loadedDicts.add(file);
+          }
+          written.push(`/data/dict/${file}`);
+        }
+
+        // 重写配置中的 ocd2 路径，指向 /data/dict
+        const patchPaths = (node) => {
+          if (!node || typeof node !== "object") return;
+          if (node.type === "ocd2" && node.file) {
+            node.file = `/data/dict/${node.file}`;
+          }
+          if (node.type === "group" && Array.isArray(node.dicts)) {
+            node.dicts.forEach(patchPaths);
+          }
+        };
+        patchPaths(cfgJson.segmentation?.dict);
+        if (Array.isArray(cfgJson.conversion_chain)) {
+          cfgJson.conversion_chain.forEach(item => patchPaths(item?.dict));
+        }
+        const cfgText = JSON.stringify(cfgJson);
+        mod.FS.writeFile(`/data/config/${cfgName}`, cfgText);
+
+        // 构建 / 更新转换句柄
+        const cfgPath = `/data/config/${cfgName}`;
+        if (handles.has(cfgName)) {
+          Api.destroy(handles.get(cfgName));
+        }
+        const handle = Api.create(cfgPath);
+        if (!handle || handle < 0) {
+          throw new Error("opencc_create failed");
+        }
+        handles.set(cfgName, handle);
+        loadedConfigs.add(cfgName);
+        const cfgNameReadable = cfgJson.name || cfgName;
+        readableNames.set(cfgName, cfgNameReadable);
+        out.textContent = `Config: ${cfgNameReadable}\nAll files written:\n` + written.join("\n");
+        const cfgInput = document.getElementById("configPath");
+        cfgInput.value = cfgNameReadable;
+        cfgInput.dataset.path = cfgPath;
+        cfgInput.dataset.handle = String(handle);
+        cfgInput.dataset.ready = "1";
+        document.getElementById("runConvert").disabled = false;
+        document.getElementById("textInput").focus();
+        return handle;
+      } catch (err) {
+        out.textContent = "Fetch/write failed: " + err;
+        const cfgInput = document.getElementById("configPath");
+        cfgInput.dataset.ready = "0";
+        document.getElementById("runConvert").disabled = true;
+        throw err;
+      }
+    };
+
+    // 构建配置按钮
+    const configFiles = [
+      "hk2s.json", "hk2t.json", "jp2t.json", "s2hk.json", "s2t.json", "s2twp.json",
+      "s2tw.json", "t2hk.json", "t2jp.json", "t2s.json", "t2tw.json",
+      "tw2s.json", "tw2t.json", "tw2sp.json"
+    ];
+    const btnContainer = document.getElementById("configButtons");
+    configFiles.forEach(name => {
+      const btn = document.createElement("button");
+      btn.textContent = name;
+      btn.onclick = () => loadConfigAndDicts(name);
+      btnContainer.appendChild(btn);
+    });
+
+    document.getElementById("runTests").onclick = async () => {
+      const out = document.getElementById("logOutput");
+      out.textContent = "Loading testcases...";
+      try {
+        const resp = await fetch("./testcases.json");
+        if (!resp.ok) throw new Error(`testcases.json HTTP ${resp.status}`);
+        const cases = await resp.json();
+        if (!Array.isArray(cases) || cases.length === 0) {
+          out.textContent = "No testcases found.";
+          return;
+        }
+        // 预加载所需配置/词典
+        const cfgSet = [...new Set(cases.map(c => c.config))];
+        for (const cfg of cfgSet) {
+          await loadConfigAndDicts(cfg);
+        }
+        let passed = 0;
+        const failed = [];
+        const lines = [];
+        cases.forEach((tc, idx) => {
+          const handle = handles.get(tc.config);
+          if (!handle) throw new Error(`missing handle for ${tc.config}`);
+          const actual = Api.convert(handle, tc.input);
+          const ok = actual === tc.expected;
+          if (ok) {
+            passed++;
+            lines.push(`✔ [${tc.config}] ${tc.input} -> ${actual}`);
+          } else {
+            failed.push({ idx, config: tc.config, input: tc.input, expected: tc.expected, actual });
+            lines.push(
+              `✘ [${tc.config}] ${tc.input}\n  expected: ${tc.expected}\n  actual:   ${actual}`
+            );
+          }
+        });
+        let msg = `Total: ${cases.length}, Passed: ${passed}, Failed: ${failed.length}`;
+        msg += `\n\nDetails:\n${lines.join("\n")}`;
+        out.textContent = msg;
+      } catch (err) {
+        out.textContent = "Run tests failed: " + err;
+      }
+    };
+
+    document.getElementById("copyOutput").onclick = async () => {
+      const text = document.getElementById("convertOutput").textContent;
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById("copyOutput");
+        const old = btn.textContent;
+        btn.textContent = "已复制";
+        setTimeout(() => (btn.textContent = old), 1200);
+      } catch (err) {
+        alert("复制失败: " + err);
+      }
+    };
+  </script>
+</body>
+</html>

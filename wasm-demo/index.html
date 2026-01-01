@@ -3,172 +3,311 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OpenCC 浏览器演示</title>
+  <title>OpenCC WASM 經典版</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --accent: #38bdf8;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --border: #1f2937;
+      --bg: #1e1e1e;
+      --card: #252526;
+      --input: #3c3c3c;
+      --border: #474747;
+      --accent: #3794ff;
+      --accent-2: #1e70d1;
+      --text: #cccccc;
+      --muted: #858585;
+      --success: #4ec9b0;
+      --error: #f44747;
     }
     * { box-sizing: border-box; }
     body {
-      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
-      font-size: 17px;
-      background: radial-gradient(circle at 10% 20%, rgba(56,189,248,0.08), transparent 25%),
-                  radial-gradient(circle at 80% 0%, rgba(14,165,233,0.08), transparent 20%),
-                  var(--bg);
+      margin: 0;
+      padding: 20px 14px 60px;
+      background: var(--bg);
       color: var(--text);
-      max-width: 820px;
-      margin: 40px auto;
-      padding: 0 16px 60px;
+      font-family: "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      font-size: 18px;
     }
-    h1 { font-size: 30px; margin-bottom: 12px; }
-    h2 { margin-top: 28px; font-size: 22px; }
-    p  { color: var(--muted); line-height: 1.6; }
-    a {
-      color: var(--accent);
-      text-decoration: none;
-      border-bottom: 1px dashed rgba(56,189,248,0.6);
-      padding-bottom: 1px;
+    header {
+      max-width: 980px;
+      margin: 0 auto 18px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
     }
-    a:hover {
-      color: #67e8f9;
-      border-bottom-color: #67e8f9;
-    }
-    pre {
-      background: var(--card);
+    header .logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      background: #2e2e2e;
       border: 1px solid var(--border);
-      padding: 12px;
-      border-radius: 8px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      color: var(--text);
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    label { display: block; margin-top: 12px; color: var(--muted); font-size: 13px; }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px 12px;
+    header .logo svg path {
+      fill: var(--text);
+    }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    h1 span {
+      display: block;
       font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #0b1221;
-      color: var(--text);
-      margin-top: 6px;
+      color: var(--muted);
+      font-weight: 500;
     }
-    button {
-      margin-top: 10px;
-      padding: 12px 14px;
-      background: linear-gradient(90deg, #22d3ee, #0ea5e9);
-      border: none;
-      border-radius: 10px;
-      color: #0b1221;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.2s ease;
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
     }
-    button:hover { box-shadow: 0 8px 24px rgba(14,165,233,0.35); }
-    button:active { transform: translateY(1px); }
-    #configButtons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-    #configButtons button {
-      background: #1d283a;
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 8px 10px;
-      border-radius: 8px;
-      min-width: 90px;
-      text-align: center;
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
     }
     .card {
-      background: rgba(17, 24, 39, 0.7);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 20px;
-      margin-top: 16px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-      backdrop-filter: blur(6px);
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
     }
-    @media (max-width: 640px) {
-      body { margin: 20px auto; padding: 0 12px 40px; font-size: 16px; }
-      h1 { font-size: 24px; }
-      h2 { font-size: 20px; }
-      .card { padding: 16px; }
-      button { width: 100%; font-size: 16px; }
-      #configButtons { gap: 8px; }
-      #configButtons button { flex: 1 1 45%; font-size: 15px; }
-      .copy-btn { width: auto; min-width: 56px; padding: 8px 10px; font-size: 15px; }
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 20px;
     }
-    .copy-btn {
+    .section {
+      margin-top: 10px;
+    }
+    .options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .option {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #2d2d2d;
+    }
+    .option legend {
+      font-size: 16px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      padding: 0;
+    }
+    .option label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 16px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--input);
+      color: var(--text);
+      padding: 12px;
+      font-size: 17px;
+      resize: vertical;
+    }
+    .output-box {
+      min-height: 140px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      background: #2d2d2d;
+      padding: 12px;
+      font-size: 16px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      transition: transform 0.12s ease, box-shadow 0.2s ease;
+    }
+    button:active { transform: translateY(1px); }
+    button.secondary {
       background: #1d283a;
       color: var(--text);
+      box-shadow: none;
       border: 1px solid var(--border);
-      padding: 8px 10px;
-      min-width: 64px;
-      width: auto;
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    #activePipeline {
+      display: flex;
+      flex: 1 1 auto;
+      min-height: 36px;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .chip {
+      background: #2d2d2d;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 16px;
+      color: var(--muted);
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .muted { color: var(--muted); }
+    .status {
+      margin-top: 8px;
+      font-size: 16px;
+      color: var(--muted);
+      white-space: pre-wrap;
+    }
+    .card.stretch {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .card.stretch textarea,
+    .card.stretch .output-box {
+      flex: 0 1 auto;
+      min-height: 220px;
+    }
+    @media (max-width: 900px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      h1 { font-size: 22px; }
+      .card { padding: 14px; }
+      .toolbar { flex-direction: column; }
+      button { width: 100%; }
+      textarea, .output-box { font-size: 15px; }
     }
   </style>
 </head>
 <body>
-  <h1>OpenCC WASM 库 用法演示</h1>
-  <div class="card">
-    <h2>加载配置与词典</h2>
-    <p>点击配置名，自动解析 JSON，按需拉取其中引用的 <code>.ocd2</code> 并写入 WASM 虚拟文件系统的 <code>/data/config/</code>。<a href="https://github.com/BYVoid/OpenCC/tree/master/data/config" target="_blank">配置文件</a>；OpenCC OCD2 字典为<a href="https://github.com/BYVoid/OpenCC/tree/master/data/dictionary" target="_blank">原始 TXT 文件</a>编译产物。</p>
-    <div id="configButtons"></div>
-  </div>
+  <header>
+    <div class="logo" aria-label="OpenCC logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 152 152">
+        <!-- https://commons.wikimedia.org/wiki/File:%E5%AD%97_favicon.svg -->
+        <path
+          d="M64.7 9.7c-.4.3.3 1.7 1.5 3 1.9 2 2.3 3.6 2.3 8.6v6.2L53 29.7c-8.5 1.3-17.4 2.7-19.7 3.1-3.8.8-4.3.7-6.6-1.9-3.1-3.6-6.2-4-5-.7 1.5 4.2.6 10.7-2.3 16.4-2.6 5.2-2.7 5.8-1.3 8.2.8 1.5 2.1 2.7 2.9 2.7 2 0 4.7-5.8 6.3-13.5l1.3-6.4L39 35.8c18.6-3.1 45.1-5.8 61-6 17.9-.3 18.7.2 12.4 7.2-2 2.2-3.5 4.3-3.2 4.5.3.3 3-.6 6.2-2.1 3.9-1.8 6.9-2.5 9.8-2.2 5.9.4 6.3-2.1 1.1-7.4-5.3-5.5-8.3-6.9-12.4-5.8-1.9.4-9.5 1.1-16.9 1.5-7.4.3-15.4.8-17.7 1.2l-4.3.5.6-3.3c.4-1.9 1.3-4.7 2.1-6.2 1.1-2.3 1.2-3.1.2-4.3-2.5-3.1-11.4-5.5-13.2-3.7z" />
+        <path
+          d="M87 43.5c-1.4.8-3.4 1.4-4.5 1.4s-9.3 1.5-18.3 3.3c-13.9 2.7-16.7 3-19.4 2-5-1.9-5.7.1-1.4 4.4 4.1 4.1 3.7 4.1 16.6-.4 9.1-3.3 26-6.5 27.3-5.3.7.7-7.9 11.8-12.1 15.4-1.9 1.8-2.2 1.8-4.4.3-4.9-3.5-5-1.4-.3 5.5 5.2 7.6 4.9 8.6-3.2 9.4-3.8.4-16.1 2-27.6 3.6-15.1 2.2-21.2 2.7-22.6 1.9-5.2-2.7-6.8.1-2.4 4.2 5.1 4.6 6.1 4.8 13.2 2.1C34 89 55.2 85 68.7 83.6l6.2-.7.7 3.7c1 5.5-.3 25.2-2.1 31.2-.9 2.9-2.3 5.6-3.2 5.9-1.4.6-8.4-.5-15-2.3-4.5-1.2-2.3 1.6 3.3 4.3 3.8 1.8 6.3 3.8 8 6.5 1.3 2.1 3.1 3.8 4 3.8 2.9 0 6.3-4.8 8.6-12.1 2-6.5 2.3-9.4 2.3-24.2V83l3.4-.6c3.6-.7 28.3.1 40.4 1.2 6.4.7 6.7.6 6.7-1.5 0-1.7-1.3-2.8-5.5-4.7-5-2.3-6-2.4-10.7-1.5-2.9.6-12.1 1.3-20.4 1.7l-15.1.7-2.3-4.7-2.2-4.7 6.8-6.4c3.8-3.5 9.3-7.7 12.1-9.2 2.9-1.5 5.3-3.4 5.3-4 0-1.4-7.7-7.3-9.4-7.3-.6.1-2.2.7-3.6 1.5z" />
+      </svg>
+    </div>
+    <h1>OpenCC 轉換工具演示 <span>更新日期：2026-01-01</span></h1>
+  </header>
 
-  <div class="card">
-    <h2>文本转换</h2>
-    <label for="configPath">配置名称</label>
-    <input id="configPath" type="text" placeholder="尚未选择配置" />
-    <label for="textInput">待转换文本</label>
-    <input id="textInput" type="text" placeholder="汉字" />
-    <button id="runConvert" disabled>执行转换</button>
-    <div style="display:flex; align-items:center; gap:8px; margin-top:10px;">
-      <pre id="convertOutput" style="flex:1; margin:0;"></pre>
-      <button id="copyOutput" class="copy-btn">复制</button>
+  <div class="card" style="max-width: 980px; margin: 0 auto 16px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <h2 style="margin: 0;">選擇轉換模式</h2>
+      <div id="activePipeline" class="chips" style="margin-top:4px;"></div>
+    </div>
+    <div class="options">
+      <fieldset class="option" id="origType">
+        <legend>原文</legend>
+        <label><input type="radio" name="orig" value="simp" checked> 簡體中文</label>
+        <label><input type="radio" name="orig" value="trad"> 繁體中文</label>
+        <label><input type="radio" name="orig" value="jpshinjitai"> 日文新字體</label>
+      </fieldset>
+      <fieldset class="option" id="tarType">
+        <legend>目標</legend>
+        <label><input type="radio" name="tar" value="simp"> 簡體中文</label>
+        <label><input type="radio" name="tar" value="trad" checked> 繁體中文</label>
+        <label><input type="radio" name="tar" value="jpshinjitai"> 日文新字體</label>
+      </fieldset>
+        <fieldset class="option" id="variantType">
+          <legend>異體字轉換</legend>
+          <label><input type="radio" name="variant" value="taiwan" checked> 台灣標準</label>
+          <label><input type="radio" name="variant" value="hongkong"> 香港標準</label>
+          <label><input type="radio" name="variant" value="opencc"> OpenCC 標準</label>
+        </fieldset>
+      <fieldset class="option" id="idiomType">
+        <legend>地域用詞轉換</legend>
+        <label><input type="radio" name="idiom" value="disabled" checked> 不轉換</label>
+        <label><input type="radio" name="idiom" value="mainland"> 中國大陸模式</label>
+        <label><input type="radio" name="idiom" value="taiwan"> 台灣模式</label>
+      </fieldset>
     </div>
   </div>
 
-  <div class="card">
-    <h2>运行 OpenCC 测试用例</h2>
-    <p>读取 <code>/public/testcases.json</code>，自动加载配置与词典并逐条校验。<a href="https://github.com/BYVoid/OpenCC/tree/master/test/testcases" target="_blank">测试用例来源</a></p>
-    <button id="runTests">运行测试</button>
-  </div>
+  <div class="container two-col">
+    <div class="card stretch">
+      <h2>輸入原文</h2>
+      <textarea id="textInput" placeholder="請輸入要轉換的文本"></textarea>
+      <div class="toolbar">
+        <button id="convertBtn">轉換</button>
+        <button id="resetBtn" class="secondary">新轉換</button>
+      </div>
+    </div>
 
-  <div class="card">
-    <h2>日志 / 结果</h2>
-    <pre id="logOutput"></pre>
+    <div class="card stretch">
+      <h2>轉換結果</h2>
+      <div class="output-box" id="output"></div>
+      <div class="toolbar" style="justify-content: flex-end; align-items: center;">
+        <button id="copyBtn" class="secondary">複製結果</button>
+      </div>
+    </div>
   </div>
 
   <script type="module">
     let cachedFactory = null;
-    let vendorBase = null; // 解析后的绝对 base
-    async function loadWasmFactory() {
-      if (cachedFactory) return cachedFactory;
-      let lastErr = null;
-      try {
-        const baseUrl = new URL("./vendor/opencc-wasm/", window.location.href).href;
-        const url = new URL("opencc-wasm.js", baseUrl).href;
-        const mod = await import(url);
-        vendorBase = baseUrl;
-        cachedFactory = mod.default;
-        return cachedFactory;
-      } catch (e) {
-        lastErr = e;
-      }
-      throw lastErr || new Error("cannot resolve vendor path");
-    }
-
     let Module = null;
     let Api = null;
-    const handles = new Map(); // configName -> handle id
-    const loadedConfigs = new Set(); // 已经写入 FS 的配置/词典
-    const loadedDicts = new Set();   // 已写入的 ocd2 文件
-    const readableNames = new Map(); // configName -> readable name
-    const initModule = async () => {
+    let vendorBase = null;
+
+    const handles = new Map();
+    const loadedDicts = new Set();
+    const loadedConfigs = new Set();
+    const readableNames = new Map();
+    let preloading = false;
+
+    async function loadWasmFactory() {
+      if (cachedFactory) return cachedFactory;
+      const baseUrl = new URL("./vendor/opencc-wasm/", window.location.href).href;
+      const url = new URL("opencc-wasm.js", baseUrl).href;
+      const mod = await import(url);
+      vendorBase = baseUrl;
+      cachedFactory = mod.default;
+      return cachedFactory;
+    }
+
+    async function initModule() {
       if (!Module) {
         const createOpenCCWasm = await loadWasmFactory();
         Module = await createOpenCCWasm();
@@ -181,63 +320,22 @@
         };
       }
       return Module;
-    };
+    }
 
-    document.getElementById("runConvert").onclick = async () => {
-      const mod = await initModule();
-      const cfgInput = document.getElementById("configPath");
-      const cfg = cfgInput.dataset.path;
-      const handle = Number(cfgInput.dataset.handle || 0);
-      const ready = cfgInput.dataset.ready === "1";
-      if (!cfg) {
-        document.getElementById("convertOutput").textContent = "请选择配置后再转换";
-        return;
-      }
-      if (!ready) {
-        document.getElementById("convertOutput").textContent = "词典未加载成功，无法转换";
-        return;
-      }
-      if (!handle) {
-        document.getElementById("convertOutput").textContent = "转换句柄未就绪";
-        return;
-      }
-      const text = document.getElementById("textInput").value || "汉字";
-      document.getElementById("convertOutput").textContent = Api.convert(handle, text);
-    };
-
-    // 解析配置 JSON，收集 ocd2 文件
     const collectOcd2Files = (dictNode, acc) => {
       if (!dictNode || typeof dictNode !== "object") return;
-      if (dictNode.type === "ocd2" && dictNode.file) {
-        acc.add(dictNode.file);
-      }
+      if (dictNode.type === "ocd2" && dictNode.file) acc.add(dictNode.file);
       if (dictNode.type === "group" && Array.isArray(dictNode.dicts)) {
         dictNode.dicts.forEach(d => collectOcd2Files(d, acc));
       }
     };
 
-    const loadConfigAndDicts = async (cfgName) => {
-      // 已加载则直接复用句柄，避免重复写入与重复占用内存
-      if (handles.has(cfgName) && loadedConfigs.has(cfgName)) {
-        const cfgPath = `/data/config/${cfgName}`;
-        const cfgInput = document.getElementById("configPath");
-        const label = readableNames.get(cfgName) || cfgName;
-        cfgInput.value = label;
-        cfgInput.dataset.path = cfgPath;
-        cfgInput.dataset.handle = String(handles.get(cfgName));
-        cfgInput.dataset.ready = "1";
-        document.getElementById("runConvert").disabled = false;
-        document.getElementById("logOutput").textContent = `已缓存：${label}`;
-        return handles.get(cfgName);
-      }
+    async function ensureConfig(cfgName) {
+      if (handles.has(cfgName) && loadedConfigs.has(cfgName)) return handles.get(cfgName);
       const mod = await initModule();
-      const out = document.getElementById("logOutput");
-      if (!mod.FS || !mod.FS.writeFile) {
-        out.textContent = "FS not available; ensure build with -s FORCE_FILESYSTEM=1";
-        throw new Error("FS not available");
-      }
+      const out = document.getElementById("status");
       try {
-        out.textContent = `Fetching ${cfgName}...`;
+        out.textContent = `拉取設定 ${cfgName}...`;
         try { mod.FS.mkdir("/data"); } catch (e) {}
         try { mod.FS.mkdir("/data/config"); } catch (e) {}
         try { mod.FS.mkdir("/data/dict"); } catch (e) {}
@@ -252,11 +350,10 @@
         if (Array.isArray(cfgJson.conversion_chain)) {
           cfgJson.conversion_chain.forEach(item => collectOcd2Files(item?.dict, dicts));
         }
-
         const written = [`/data/config/${cfgName}`];
         for (const file of dicts) {
-          const url = `${base}data/dict/${file}`;
           if (!loadedDicts.has(file)) {
+            const url = `${base}data/dict/${file}`;
             const resp = await fetch(url);
             if (!resp.ok) throw new Error(`${url} -> HTTP ${resp.status}`);
             const buf = new Uint8Array(await resp.arrayBuffer());
@@ -265,124 +362,251 @@
           }
           written.push(`/data/dict/${file}`);
         }
-
-        // 重写配置中的 ocd2 路径，指向 /data/dict
         const patchPaths = (node) => {
           if (!node || typeof node !== "object") return;
-          if (node.type === "ocd2" && node.file) {
-            node.file = `/data/dict/${node.file}`;
-          }
-          if (node.type === "group" && Array.isArray(node.dicts)) {
-            node.dicts.forEach(patchPaths);
-          }
+          if (node.type === "ocd2" && node.file) node.file = `/data/dict/${node.file}`;
+          if (node.type === "group" && Array.isArray(node.dicts)) node.dicts.forEach(patchPaths);
         };
         patchPaths(cfgJson.segmentation?.dict);
         if (Array.isArray(cfgJson.conversion_chain)) {
           cfgJson.conversion_chain.forEach(item => patchPaths(item?.dict));
         }
-        const cfgText = JSON.stringify(cfgJson);
-        mod.FS.writeFile(`/data/config/${cfgName}`, cfgText);
-
-        // 构建 / 更新转换句柄
-        const cfgPath = `/data/config/${cfgName}`;
-        if (handles.has(cfgName)) {
-          Api.destroy(handles.get(cfgName));
-        }
-        const handle = Api.create(cfgPath);
-        if (!handle || handle < 0) {
-          throw new Error("opencc_create failed");
-        }
+        mod.FS.writeFile(`/data/config/${cfgName}`, JSON.stringify(cfgJson));
+        if (handles.has(cfgName)) Api.destroy(handles.get(cfgName));
+        const handle = Api.create(`/data/config/${cfgName}`);
+        if (!handle || handle < 0) throw new Error("opencc_create failed");
         handles.set(cfgName, handle);
         loadedConfigs.add(cfgName);
-        const cfgNameReadable = cfgJson.name || cfgName;
-        readableNames.set(cfgName, cfgNameReadable);
-        out.textContent = `Config: ${cfgNameReadable}\nAll files written:\n` + written.join("\n");
-        const cfgInput = document.getElementById("configPath");
-        cfgInput.value = cfgNameReadable;
-        cfgInput.dataset.path = cfgPath;
-        cfgInput.dataset.handle = String(handle);
-        cfgInput.dataset.ready = "1";
-        document.getElementById("runConvert").disabled = false;
-        document.getElementById("textInput").focus();
+        readableNames.set(cfgName, cfgJson.name || cfgName);
+        document.getElementById("filesLoaded").textContent = "字典檔案已載入";
         return handle;
       } catch (err) {
-        out.textContent = "Fetch/write failed: " + err;
-        const cfgInput = document.getElementById("configPath");
-        cfgInput.dataset.ready = "0";
-        document.getElementById("runConvert").disabled = true;
+        out.textContent = "載入失敗：" + err;
         throw err;
       }
+    }
+
+    function pipelineForSelection(orig, tar, variant, idiom) {
+      const chain = [];
+      if (orig === tar) return chain;
+
+      // 簡體中文 → 繁體中文
+      if (orig === "simp" && tar === "trad") {
+        if (variant === "taiwan") chain.push(idiom === "taiwan" ? "s2twp.json" : "s2tw.json");
+        else if (variant === "hongkong") chain.push("s2hk.json");
+        else chain.push("s2t.json");
+        return chain;
+      }
+      // 簡體中文 → 日文新字體
+      if (orig === "simp" && tar === "jpshinjitai") {
+        chain.push("jp2t.json");
+        return chain;
+      }
+
+      // 繁體中文 → 簡體中文
+      if (orig === "trad" && tar === "simp") {
+        if (variant === "hongkong") chain.push("hk2s.json");
+        else if (variant === "taiwan") chain.push(idiom === "mainland" ? "tw2sp.json" : "tw2s.json");
+        else chain.push("t2s.json");
+        return chain;
+      }
+      // 繁體中文 → 日文新字體
+      if (orig === "trad" && tar === "jpshinjitai") {
+        chain.push("t2jp.json");
+        return chain;
+      }
+
+      // 繁體中文 → 繁體中文（異體）
+      if (orig === "trad" && tar === "trad") {
+        if (variant === "hongkong") chain.push("t2hk.json");
+        else if (variant === "taiwan") chain.push("t2tw.json");
+        return chain;
+      }
+
+      // 日文新字體 → 繁體中文
+      if (orig === "jpshinjitai" && tar === "trad") {
+        chain.push("jp2t.json");
+        return chain;
+      }
+      return null;
+    }
+
+    async function convertText() {
+      const status = document.getElementById("status");
+      const pipelineBox = document.getElementById("activePipeline");
+      pipelineBox.innerHTML = "";
+
+      const orig = document.querySelector('input[name="orig"]:checked').value;
+      const tar = document.querySelector('input[name="tar"]:checked').value;
+      const variant = document.querySelector('input[name="variant"]:checked').value;
+      const idiom = document.querySelector('input[name="idiom"]:checked').value;
+      const pipeline = pipelineForSelection(orig, tar, variant, idiom);
+      if (pipeline === null) {
+        status.textContent = "無效的轉換組合，請更改選項。";
+        return;
+      }
+      const inputText = document.getElementById("textInput").value || "";
+      if (!pipeline.length) {
+        status.textContent = "來源與目標腳本相同，未進行轉換。";
+        document.getElementById("output").textContent = inputText;
+        return;
+      }
+      status.textContent = "正在載入設定與字典...";
+      let current = inputText;
+      for (const cfg of pipeline) {
+        pipelineBox.appendChild(Object.assign(document.createElement("span"), { className: "chip", textContent: cfg }));
+        const handle = await ensureConfig(cfg);
+        current = Api.convert(handle, current);
+      }
+      document.getElementById("output").textContent = current;
+      document.getElementById("output").scrollIntoView({ behavior: "smooth", block: "center" });
+      const names = pipeline.map(c => readableNames.get(c) || c).join(" › ");
+      status.textContent = `已使用設定：${names}（配置：${pipeline.join(", ")}）`;
+    }
+
+    document.getElementById("convertBtn").onclick = convertText;
+    document.getElementById("resetBtn").onclick = () => {
+      document.getElementById("textInput").value = "";
+      document.getElementById("output").textContent = "";
+    };
+    document.getElementById("copyBtn").onclick = async () => {
+      const text = document.getElementById("output").textContent;
+      const status = document.getElementById("status");
+      if (!text) {
+        status.textContent = "沒有可複製的內容";
+        return;
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const helper = document.createElement("textarea");
+          helper.value = text;
+          helper.style.position = "fixed";
+          helper.style.opacity = "0";
+          document.body.appendChild(helper);
+          helper.select();
+          document.execCommand("copy");
+          document.body.removeChild(helper);
+        }
+        status.textContent = "已複製到剪貼簿";
+      } catch (err) {
+        status.textContent = "複製失敗：" + err;
+      }
     };
 
-    // 构建配置按钮
-    const configFiles = [
-      "hk2s.json", "hk2t.json", "jp2t.json", "s2hk.json", "s2t.json", "s2twp.json",
-      "s2tw.json", "t2hk.json", "t2jp.json", "t2s.json", "t2tw.json",
-      "tw2s.json", "tw2t.json", "tw2sp.json"
-    ];
-    const btnContainer = document.getElementById("configButtons");
-    configFiles.forEach(name => {
-      const btn = document.createElement("button");
-      btn.textContent = name;
-      btn.onclick = () => loadConfigAndDicts(name);
-      btnContainer.appendChild(btn);
+    document.getElementById("textInput").addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        convertText();
+      }
     });
 
-    document.getElementById("runTests").onclick = async () => {
-      const out = document.getElementById("logOutput");
-      out.textContent = "Loading testcases...";
+    async function preloadCurrentPipeline() {
+      if (preloading) return;
+      preloading = true;
+      const status = document.getElementById("status");
+      const pipelineBox = document.getElementById("activePipeline");
+      pipelineBox.innerHTML = "";
+      const orig = document.querySelector('input[name="orig"]:checked').value;
+      const tar = document.querySelector('input[name="tar"]:checked').value;
+      const variant = document.querySelector('input[name="variant"]:checked').value;
+      const idiom = document.querySelector('input[name="idiom"]:checked').value;
+      const pipeline = pipelineForSelection(orig, tar, variant, idiom) || [];
+      if (!pipeline.length) { preloading = false; return; }
       try {
-        const resp = await fetch("./testcases.json");
-        if (!resp.ok) throw new Error(`testcases.json HTTP ${resp.status}`);
-        const cases = await resp.json();
-        if (!Array.isArray(cases) || cases.length === 0) {
-          out.textContent = "No testcases found.";
-          return;
+        status.textContent = "預先載入設定中...";
+        for (const cfg of pipeline) {
+          await ensureConfig(cfg);
         }
-        // 预加载所需配置/词典
-        const cfgSet = [...new Set(cases.map(c => c.config))];
-        for (const cfg of cfgSet) {
-          await loadConfigAndDicts(cfg);
-        }
-        let passed = 0;
-        const failed = [];
-        const lines = [];
-        cases.forEach((tc, idx) => {
-          const handle = handles.get(tc.config);
-          if (!handle) throw new Error(`missing handle for ${tc.config}`);
-          const actual = Api.convert(handle, tc.input);
-          const ok = actual === tc.expected;
-          if (ok) {
-            passed++;
-            lines.push(`✔ [${tc.config}] ${tc.input} -> ${actual}`);
-          } else {
-            failed.push({ idx, config: tc.config, input: tc.input, expected: tc.expected, actual });
-            lines.push(
-              `✘ [${tc.config}] ${tc.input}\n  expected: ${tc.expected}\n  actual:   ${actual}`
-            );
-          }
+        status.textContent = "設定已預先載入，可直接轉換。";
+        pipeline.forEach(cfg => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = cfg;
+          pipelineBox.appendChild(chip);
         });
-        let msg = `Total: ${cases.length}, Passed: ${passed}, Failed: ${failed.length}`;
-        msg += `\n\nDetails:\n${lines.join("\n")}`;
-        out.textContent = msg;
       } catch (err) {
-        out.textContent = "Run tests failed: " + err;
+        status.textContent = "預先載入失敗：" + err;
+      } finally {
+        preloading = false;
       }
-    };
+    }
 
-    document.getElementById("copyOutput").onclick = async () => {
-      const text = document.getElementById("convertOutput").textContent;
-      if (!text) return;
-      try {
-        await navigator.clipboard.writeText(text);
-        const btn = document.getElementById("copyOutput");
-        const old = btn.textContent;
-        btn.textContent = "已复制";
-        setTimeout(() => (btn.textContent = old), 1200);
-      } catch (err) {
-        alert("复制失败: " + err);
-      }
+    const targetInputs = document.querySelectorAll('input[name="tar"]');
+    const variantInputs = document.querySelectorAll('input[name="variant"]');
+    const idiomInputs = document.querySelectorAll('input[name="idiom"]');
+    let variantWasForced = false;
+    const forceSelect = (inputs, value) => {
+      inputs.forEach(i => { if (i.value === value) i.checked = true; });
     };
+    function updateOptionAvailability() {
+      const origVal = document.querySelector('input[name="orig"]:checked').value;
+
+      // 目標可選項
+      targetInputs.forEach(i => { i.disabled = false; });
+      if (origVal === "simp") {
+        targetInputs.forEach(i => {
+          if (i.value === "simp" || i.value === "jpshinjitai") i.disabled = true;
+        });
+      } else if (origVal === "trad") {
+        targetInputs.forEach(i => { if (i.value === "trad") i.disabled = true; });
+      } else if (origVal === "jpshinjitai") {
+        targetInputs.forEach(i => { if (i.value !== "trad") i.disabled = true; });
+      }
+      const currentTar = document.querySelector('input[name="tar"]:checked');
+      if (currentTar && currentTar.disabled) {
+        const firstEnabledTar = Array.from(targetInputs).find(i => !i.disabled);
+        if (firstEnabledTar) firstEnabledTar.checked = true;
+      }
+      const tarVal = document.querySelector('input[name="tar"]:checked').value;
+
+      // 異體字：目標或原文為日文時禁用
+      const disableVariant = tarVal === "jpshinjitai" || origVal === "jpshinjitai";
+      variantInputs.forEach(i => { i.disabled = disableVariant; });
+      if (disableVariant) {
+        variantWasForced = true;
+        forceSelect(variantInputs, "opencc");
+      } else if (variantWasForced) {
+        // 恢復可用時回到默認台灣
+        forceSelect(variantInputs, "taiwan");
+        variantWasForced = false;
+      }
+      const variantVal = document.querySelector('input[name="variant"]:checked').value;
+
+      // 地域用詞：僅在 (簡->繁 且 台灣異體) 或 (繁->簡 且 台灣異體) 時啟用
+      let disableIdiom = true;
+      if (origVal === "simp" && tarVal === "trad" && variantVal === "taiwan") {
+        disableIdiom = false;
+      } else if (origVal === "trad" && tarVal === "simp" && variantVal === "taiwan") {
+        disableIdiom = false;
+      }
+      idiomInputs.forEach(i => { i.disabled = disableIdiom; });
+      if (disableIdiom) forceSelect(idiomInputs, "disabled");
+    }
+
+    ["orig", "tar", "variant", "idiom"].forEach(name => {
+      document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+        r.addEventListener("change", () => {
+          updateOptionAvailability();
+          preloadCurrentPipeline();
+        });
+      });
+    });
+
+    // 開啟頁面就預載預設組合
+    updateOptionAvailability();
+    preloadCurrentPipeline();
   </script>
+    <div class="container" style="margin-top: 22px; text-align: center; color: var(--muted); font-size: 15px; line-height: 1.5;">
+      <div id="status" class="status" style="margin-top: 0; color: var(--muted);"></div>
+    <div id="filesLoaded" class="muted" style="margin-top: 4px;"></div>
+      <div style="margin-top: 8px;">
+        本頁面中的轉換全部在瀏覽器內完成，不會上傳文字，保障您的隱私。 |
+        <a href="https://github.com/BYVoid/OpenCC" target="_blank" style="color: var(--muted); border-bottom: 1px dashed var(--border); text-decoration: none;">OpenCC GitHub</a> |
+        <a href="https://t.me/+TVq4LmPRlN9hZjE0" target="_blank" style="color: var(--muted); border-bottom: 1px dashed var(--border); text-decoration: none;">Telegram 討論組</a>
+      <div style="margin-top: 4px; color: var(--muted); font-size: 15px;">Copyright 2026 OpenCC Authors</div>
+      </div>
+    </div>
 </body>
 </html>
