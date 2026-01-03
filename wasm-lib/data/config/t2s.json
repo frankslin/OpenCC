@@ -1,5 +1,11 @@
 {
-  "name": "Traditional Chinese to Simplified Chinese",
+  "name": "Traditional Chinese (OpenCC Standard) to Simplified Chinese",
+  "description_zh": "OpenCC標準繁體到簡體",
+  "examples": [
+    {"input": "鼠標", "output": "鼠标"},
+    {"input": "計算機", "output": "计算机"},
+    {"input": "軟件", "output": "软件"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {

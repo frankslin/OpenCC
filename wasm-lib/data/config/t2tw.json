@@ -1,5 +1,11 @@
 {
-  "name": "Traditional Chinese to Traditional Chinese (Taiwan standard)",
+  "name": "Traditional Chinese (OpenCC Standard) to Traditional Chinese (Taiwan standard)",
+  "description_zh": "OpenCC標準繁體到台灣正體",
+  "examples": [
+    {"input": "裏", "output": "裡"},
+    {"input": "羣", "output": "群"},
+    {"input": "着", "output": "著"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {
