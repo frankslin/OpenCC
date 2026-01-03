@@ -1,5 +1,10 @@
 {
-  "name": "Traditional Chinese to Traditional Chinese (Hong Kong variant)",
+  "name": "Traditional Chinese (OpenCC Standard) to Traditional Chinese (Hong Kong variant)",
+  "description_zh": "OpenCC標準繁體到香港繁體",
+  "examples": [
+    {"input": "臺", "output": "台"},
+    {"input": "說", "output": "説"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {

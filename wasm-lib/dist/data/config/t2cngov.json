@@ -1,5 +1,12 @@
 {
   "name": "Traditional Chinese to CN Government Standard",
+  "description_zh": "繁體到中國政府規範繁體",
+  "examples": [
+    {"input": "關於這個問題", "output": "關于這個問題"},
+    {"input": "裡面的說明", "output": "裏面的説明"},
+    {"input": "偽造文件", "output": "僞造文件"},
+    {"input": "软件开发", "output": "軟件開发"}
+  ],
   "author": "TerryTian-tech",
   "license": "Apache License 2.0",
   "source": "https://github.com/TerryTian-tech/OpenCC-Traditional-Chinese-characters-according-to-Chinese-government-standards",

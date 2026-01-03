@@ -1,5 +1,12 @@
 {
   "name": "New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai)",
+  "description_zh": "日文新字體到繁體（舊字體）",
+  "examples": [
+    {"input": "財団法人", "output": "財團法人"},
+    {"input": "桜花駅", "output": "櫻花驛"},
+    {"input": "渋谷区", "output": "澀谷區"},
+    {"input": "図書館", "output": "圖書館"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {

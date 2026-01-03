@@ -1,5 +1,12 @@
 {
   "name": "Simplified Chinese to Traditional Chinese (Taiwan standard, with phrases)",
+  "description_zh": "簡體到台灣正體（包含慣用詞轉換）",
+  "examples": [
+    {"input": "数据库", "output": "資料庫"},
+    {"input": "软件", "output": "軟體"},
+    {"input": "鼠标", "output": "滑鼠"},
+    {"input": "网络", "output": "網路"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {

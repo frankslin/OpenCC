@@ -1,5 +1,11 @@
 {
   "name": "Simplified Chinese to Traditional Chinese (Taiwan standard)",
+  "description_zh": "簡體到台灣正體",
+  "examples": [
+    {"input": "鼠标", "output": "鼠標"},
+    {"input": "计算机", "output": "計算機"},
+    {"input": "软件", "output": "軟件"}
+  ],
   "segmentation": {
     "type": "mmseg",
     "dict": {
