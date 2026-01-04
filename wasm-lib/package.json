@@ -35,7 +35,8 @@
   ],
   "scripts": {
     "build": "./build.sh && node scripts/build-api.js",
-    "test": "node --test test/opencc.test.js"
+    "test": "node --test test/opencc.test.js",
+    "benchmark": "node benchmark/performance.js"
   },
   "directories": {
     "test": "test"
