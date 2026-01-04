@@ -36,7 +36,8 @@
   "scripts": {
     "build": "./build.sh && node scripts/build-api.js",
     "test": "node --test test/opencc.test.js",
-    "benchmark": "node benchmark/performance.js"
+    "benchmark": "node benchmark/performance.js",
+    "benchmark:compare": "node benchmark/comparison.js"
   },
   "directories": {
     "test": "test"
@@ -51,5 +52,8 @@
     "url": "https://github.com/frankslin/OpenCC.git",
     "directory": "wasm-lib"
   },
-  "homepage": "https://github.com/frankslin/OpenCC/tree/master/wasm-lib"
+  "homepage": "https://github.com/frankslin/OpenCC/tree/master/wasm-lib",
+  "devDependencies": {
+    "opencc-js": "^1.0.5"
+  }
 }
