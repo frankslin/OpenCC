@@ -37,7 +37,9 @@
     "build": "./build.sh && node scripts/build-api.js",
     "test": "node --test test/opencc.test.js",
     "benchmark": "node benchmark/performance.js",
-    "benchmark:compare": "node benchmark/comparison.js"
+    "benchmark:compare": "node benchmark/comparison.js",
+    "test:accuracy": "node benchmark/accuracy-test.js",
+    "test:accuracy-hard": "node benchmark/accuracy-test-hard.js"
   },
   "directories": {
     "test": "test"
