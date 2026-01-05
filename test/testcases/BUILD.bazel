@@ -4,7 +4,7 @@ package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testcases",
-    srcs = ["testcases.json"],
+    srcs = glob(["*.json"]),
 )
 
 # js_library wrapper so the Node.js js_test (//:node_test) can read the cases.
