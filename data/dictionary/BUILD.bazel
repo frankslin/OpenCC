@@ -90,7 +90,9 @@ genrule(
 
 filegroup(
     name = "text_dictionaries",
-    srcs = TEXT_DICTS,
+    srcs = TEXT_DICTS + [
+        "//data/dictionary/cngov:text_dictionaries",
+    ],
 )
 
 genrule(
@@ -109,6 +111,7 @@ filegroup(
     name = "binary_dictionaries",
     srcs = [txt.replace(".txt", ".ocd2") for txt in TEXT_DICTS] + [
         "CJK_Compatibility_Ideographs.ocd2",
+        "//data/dictionary/cngov:binary_dictionaries",
     ],
 )
 

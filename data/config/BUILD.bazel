@@ -81,3 +81,19 @@ test_suite(
         for config in CONFIGS
     ],
 )
+
+cc_test(
+    name = "cngov_validation_test",
+    srcs = ["CNGovValidationTest.cpp"],
+    data = [
+        ":config",
+        "//data/dictionary:binary_dictionaries",
+        "//test/testcases",
+    ],
+    deps = [
+        "//src:simple_converter",
+        "@bazel_tools//tools/cpp/runfiles",
+        "@googletest//:gtest_main",
+        "@rapidjson",
+    ],
+)
