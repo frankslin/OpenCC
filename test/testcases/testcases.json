@@ -388,6 +388,21 @@
       }
     },
     {
+      "id": "ByVoid_OpenCC_Issue950_AlgorithmConversionRev",
+      "input": "演算法",
+      "expected": {
+        "s2t": "演算法",
+        "s2tw": "演算法",
+        "s2twp": "演算法",
+        "s2hk": "演算法",
+        "tw2s": "演算法",
+        "tw2sp": "算法",
+        "tw2t": "演算法",
+        "t2s": "演算法",
+        "t2hk": "演算法"
+      }
+    },
+    {
       "id": "ByVoid_OpenCC_Issue950_AlgorithmInPhrase",
       "input": "排序算法很重要",
       "expected": {
