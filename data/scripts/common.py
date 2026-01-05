@@ -53,7 +53,15 @@ def reverse_items(input_filename, output_filename):
     output_file = open(output_filename, "wb")
 
     for key in sorted(dic.keys()):
-        line = key + "\t" + " ".join(dic[key]) + "\n"
+        # Prioritize non-identity mappings in reverse dictionary
+        # If both identity (key==value) and non-identity mappings exist,
+        # put non-identity first for better conversion results
+        values = dic[key]
+        non_identity = [v for v in values if v != key]
+        identity = [v for v in values if v == key]
+        ordered_values = non_identity + identity
+
+        line = key + "\t" + " ".join(ordered_values) + "\n"
         output_file.write(line.encode('utf-8'))
 
     output_file.close()
