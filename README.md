@@ -357,6 +357,33 @@ These ports are community-maintained and may not always track upstream updates.
 * `t2jp.json` **Old Japanese Kanji (Kyūjitai)** to **New Japanese Kanji (Shinjitai)** / **日文舊字體** 到 **日文新字體**
 * `jp2t.json` **New Japanese Kanji (Shinjitai)** to **Old Japanese Kanji (Kyūjitai)** / **日文新字體** 到 **日文舊字體**，並將少量日文詞組轉換爲對應中文
 
+#### CN Government Standard Mode 大陸政府標準模式
+
+將各種標準的繁體中文（港、台、混合格式）轉換為中國《通用規範漢字表》（2013）定義的規範繁體字。
+
+**兩種轉換模式：**
+
+* **t2cngov** - 全部轉為標準繁體（包括簡體→繁體）
+* **t2cngov_keep_simp** - 保留原有簡體字，僅標準化繁體部分
+
+**使用示例：**
+
+```bash
+# 全轉為政府標準繁體
+echo "測試简体混繁體" | opencc -c t2cngov.json
+# 輸出: 測試簡體混繁體
+
+# 保留簡體字
+echo "測試简体混繁體" | opencc -c t2cngov_keep_simp.json
+# 輸出: 测试简体混繁體
+
+# 異體字標準化
+echo "潮溼的露臺" | opencc -c t2cngov.json
+# 輸出: 潮湿的露台
+```
+
+**致謝：**基於 [TerryTian-tech](https://github.com/TerryTian-tech) 的[研究成果](https://github.com/TerryTian-tech/OpenCC-Traditional-Chinese-characters-according-to-Chinese-government-standards)，在此表示感謝。
+
 #### 指定配置文件
 
 通过环境变量`OPENCC_DATA_DIR`加载指定路径下的配置文件
@@ -479,7 +506,12 @@ bazel build //:opencc
 
 #### Linux & macOS
 
-```
+```bash
+# Build and run all tests (recommended)
+make check
+
+# Or build first, then run tests separately
+make
 make test
 ```
 
