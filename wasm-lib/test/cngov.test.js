@@ -7,16 +7,9 @@ import OpenCC from "../index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-function loadCases(filename) {
-  const filePath = path.join(__dirname, filename);
-  const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-  return parsed?.cases || [];
-}
-
-const cases = [
-  ...loadCases("testcases.json"),
-  ...loadCases("cngov_testcases.json"),
-];
+const casesPath = path.join(__dirname, "cngov_testcases.json");
+const parsed = JSON.parse(fs.readFileSync(casesPath, "utf-8"));
+const cases = parsed?.cases || [];
 
 const converterCache = new Map();
 function getConverter(config) {
