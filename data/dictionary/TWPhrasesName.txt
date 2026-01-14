@@ -1,3 +1,11 @@
+# Open Chinese Convert (OpenCC) Dictionary
+# File: TWPhrasesName.txt
+# Format: key	value(s) (values separated by spaces)
+# License: Apache-2.0 (see LICENSE)
+# Source: https://github.com/ByVoid/OpenCC
+# Used in configs: s2twp.json (via TWPhrases.ocd2)
+# Build: merged with TWPhrasesIT.txt and TWPhrasesOther.txt into TWPhrases.txt (TWPhrases.ocd2)
+
 乍得	查德
 也門	葉門
 仙童半導體	快捷半導體
