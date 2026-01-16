@@ -61,12 +61,6 @@ SerializableDictPtr ConvertDict(const std::string& format,
                                 const DictPtr dict,
                                 const std::string& formatFrom) {
   if (format == "text") {
-    if (formatFrom == "text") {
-      TextDictPtr textDict = std::static_pointer_cast<TextDict>(dict);
-      if (textDict->GetLexicon()->HasAnnotations()) {
-        return std::static_pointer_cast<SerializableDict>(textDict);
-      }
-    }
     return TextDict::NewFromDict(*dict.get());
   } else if (format == "ocd") {
 #ifdef ENABLE_DARTS
