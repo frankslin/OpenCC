@@ -17,80 +17,103 @@
  */
 
 #include "JiebaSegmentation.hpp"
+#include "Segments.hpp"
 #include "TestUtils.hpp"
+#include "TestUtilsUTF8.hpp"
+
+#include <fstream>
+#include <memory>
+#include <sstream>
+
+#ifdef BAZEL
+#include "tools/cpp/runfiles/runfiles.h"
+using bazel::tools::cpp::runfiles::Runfiles;
+#endif
+
+#include "rapidjson/document.h"
 
 namespace opencc {
 
 class JiebaSegmentationTest : public ::testing::Test {
 protected:
-  JiebaSegmentationTest()
-      : dictPath(CMAKE_SOURCE_DIR "/deps/libcppjieba/dict/jieba.dict.utf8"),
-        modelPath(CMAKE_SOURCE_DIR "/deps/libcppjieba/dict/hmm_model.utf8"),
-        userDictPath(CMAKE_SOURCE_DIR "/deps/libcppjieba/dict/user.dict.utf8") {
-  }
-
   virtual void SetUp() {
+#ifdef BAZEL
+    runfiles_.reset(Runfiles::CreateForTest());
+    ASSERT_NE(nullptr, runfiles_);
+    dictPath = runfiles_->Rlocation("_main/data/jieba_dict/jieba.dict.utf8");
+    modelPath = runfiles_->Rlocation("_main/data/jieba_dict/hmm_model.utf8");
+    userDictPath = runfiles_->Rlocation("_main/data/jieba_dict/user.dict.utf8");
+#else
+    dictPath = CMAKE_SOURCE_DIR "/data/jieba_dict/jieba.dict.utf8";
+    modelPath = CMAKE_SOURCE_DIR "/data/jieba_dict/hmm_model.utf8";
+    userDictPath = CMAKE_SOURCE_DIR "/data/jieba_dict/user.dict.utf8";
+#endif
     segmenter = SegmentationPtr(
         new JiebaSegmentation(dictPath, modelPath, userDictPath));
+
+#ifdef BAZEL
+    testcasesPath_ = runfiles_->Rlocation(
+        "_main/test/testcases/jieba_comparison_testcases.json");
+#else
+    testcasesPath_ =
+        CMAKE_SOURCE_DIR "/test/testcases/jieba_comparison_testcases.json";
+#endif
   }
 
+#ifdef BAZEL
+  std::unique_ptr<Runfiles> runfiles_;
+#endif
   std::string dictPath;
   std::string modelPath;
   std::string userDictPath;
   SegmentationPtr segmenter;
+  std::string testcasesPath_;
 };
 
-TEST_F(JiebaSegmentationTest, BasicSegmentation) {
-  // Test basic Chinese segmentation
-  const auto& segments = segmenter->Segment(utf8("我来到北京清华大学"));
-  // Jieba should segment this as: 我/来到/北京/清华大学
-  EXPECT_GT(segments->Length(), 0);
-
-  // Verify we get at least some segments
-  std::string result = segments->ToString();
-  EXPECT_EQ(utf8("我来到北京清华大学"), result);
+std::string JoinSegments(const SegmentsPtr& segments) {
+  std::string result;
+  for (size_t i = 0; i < segments->Length(); i++) {
+    if (i > 0) {
+      result += "/";
+    }
+    result += segments->At(i);
+  }
+  return result;
 }
 
-TEST_F(JiebaSegmentationTest, ComplexPhrase) {
-  // Test with a more complex phrase
-  const auto& segments = segmenter->Segment(
-      utf8("小明硕士毕业于中国科学院计算所，后在日本京都大学深造"));
-  EXPECT_GT(segments->Length(), 0);
+TEST_F(JiebaSegmentationTest, RunAllTestCases) {
+  std::ifstream ifs(testcasesPath_);
+  ASSERT_TRUE(ifs.is_open()) << "Failed to open: " << testcasesPath_;
+  std::stringstream buffer;
+  buffer << ifs.rdbuf();
+  std::string json = buffer.str();
 
-  // The result should preserve the original text
-  std::string result = segments->ToString();
-  EXPECT_EQ(utf8("小明硕士毕业于中国科学院计算所，后在日本京都大学深造"),
-            result);
-}
+  rapidjson::Document doc;
+  doc.Parse(json.c_str());
+  ASSERT_FALSE(doc.HasParseError());
+  ASSERT_TRUE(doc.IsObject());
+  ASSERT_TRUE(doc.HasMember("cases"));
+  const auto& cases = doc["cases"];
+  ASSERT_TRUE(cases.IsArray());
 
-TEST_F(JiebaSegmentationTest, EmptyString) {
-  const auto& segments = segmenter->Segment("");
-  EXPECT_EQ(0, segments->Length());
-}
+  for (auto& testcase : cases.GetArray()) {
+    ASSERT_TRUE(testcase.IsObject());
+    ASSERT_TRUE(testcase.HasMember("input"));
+    ASSERT_TRUE(testcase["input"].IsString());
+    const std::string input = testcase["input"].GetString();
+    const std::string id =
+        testcase.HasMember("id") && testcase["id"].IsString()
+            ? testcase["id"].GetString()
+            : "(unknown id)";
+    ASSERT_TRUE(testcase.HasMember("expected_segmentation"));
+    ASSERT_TRUE(testcase["expected_segmentation"].IsString());
+    const std::string expectedSegmentation =
+        testcase["expected_segmentation"].GetString();
 
-TEST_F(JiebaSegmentationTest, SingleCharacter) {
-  const auto& segments = segmenter->Segment(utf8("我"));
-  EXPECT_EQ(1, segments->Length());
-  EXPECT_EQ(utf8("我"), std::string(segments->At(0)));
-}
-
-TEST_F(JiebaSegmentationTest, EnglishAndChinese) {
-  // Test mixed English and Chinese
-  const auto& segments = segmenter->Segment(utf8("我爱Python编程"));
-  EXPECT_GT(segments->Length(), 0);
-
-  std::string result = segments->ToString();
-  EXPECT_EQ(utf8("我爱Python编程"), result);
-}
-
-TEST_F(JiebaSegmentationTest, UnknownWords) {
-  // Test with some unknown/new words that may not be in dictionary
-  // Jieba's HMM should handle these
-  const auto& segments = segmenter->Segment(utf8("蓝翔技校挖掘机专业"));
-  EXPECT_GT(segments->Length(), 0);
-
-  std::string result = segments->ToString();
-  EXPECT_EQ(utf8("蓝翔技校挖掘机专业"), result);
+    const auto& segments = segmenter->Segment(input);
+    std::string joined = JoinSegments(segments);
+    EXPECT_EQ(expectedSegmentation, joined) << "case=" << id;
+  }
 }
 
 } // namespace opencc

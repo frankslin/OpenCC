@@ -19,10 +19,51 @@
 #include "JiebaSegmentation.hpp"
 #include "Segments.hpp"
 
+#include <sys/stat.h>
+
 // Include CppJieba headers
 #include "Application.hpp"
 
 using namespace opencc;
+
+namespace {
+std::string ParentDir(const std::string& path) {
+  std::string::size_type pos = path.find_last_of("/\\");
+  if (pos == std::string::npos) {
+    return "";
+  }
+  return path.substr(0, pos + 1);
+}
+
+bool IsRegularFile(const std::string& path) {
+  struct stat info;
+  if (stat(path.c_str(), &info) != 0) {
+    return false;
+  }
+  return (info.st_mode & S_IFMT) == S_IFREG;
+}
+
+std::string ResolveAuxPath(const std::string& dictPath,
+                           const std::string& fileName) {
+  const std::string baseDir = ParentDir(dictPath);
+  const std::string candidate = baseDir + fileName;
+  if (IsRegularFile(candidate)) {
+    return candidate;
+  }
+  const std::string needle = "data/jieba_dict/";
+  std::string::size_type pos = dictPath.find(needle);
+  if (pos != std::string::npos) {
+    std::string alt = dictPath;
+    alt.replace(pos, needle.size(), "deps/libcppjieba/dict/");
+    const std::string altDir = ParentDir(alt);
+    const std::string altCandidate = altDir + fileName;
+    if (IsRegularFile(altCandidate)) {
+      return altCandidate;
+    }
+  }
+  return candidate;
+}
+} // namespace
 
 JiebaSegmentation::JiebaSegmentation(const std::string& dictPath,
                                      const std::string& modelPath,
@@ -31,8 +72,8 @@ JiebaSegmentation::JiebaSegmentation(const std::string& dictPath,
           dictPath,
           modelPath,
           userDictPath.empty() ? "" : userDictPath,
-          "",  // idf path (not used for basic segmentation)
-          ""   // stop words path (not used for basic segmentation)
+          ResolveAuxPath(dictPath, "idf.utf8"),
+          ResolveAuxPath(dictPath, "stop_words.utf8")
       )) {
 }
 

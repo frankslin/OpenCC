@@ -152,13 +152,13 @@ public:
 #ifdef ENABLE_JIEBA
     else if (type == "jieba") {
       // Required: dict_path and model_path
-      std::string dictPath = GetStringProperty(doc, "dict_path");
-      std::string modelPath = GetStringProperty(doc, "model_path");
+      std::string dictPath = FindFile(GetStringProperty(doc, "dict_path"));
+      std::string modelPath = FindFile(GetStringProperty(doc, "model_path"));
 
       // Optional: user_dict_path
       std::string userDictPath;
       if (doc.HasMember("user_dict_path") && doc["user_dict_path"].IsString()) {
-        userDictPath = doc["user_dict_path"].GetString();
+        userDictPath = FindFile(doc["user_dict_path"].GetString());
       }
 
       segmentation = SegmentationPtr(new JiebaSegmentation(
@@ -220,6 +220,57 @@ public:
       ifs.open(UTF8Util::GetPlatformString(path).c_str());
       if (ifs.is_open()) {
         return path;
+      }
+    }
+
+    throw FileNotFound(fileName);
+  }
+
+  std::string FindFile(std::string fileName) {
+    std::ifstream ifs;
+
+    ifs.open(UTF8Util::GetPlatformString(fileName).c_str());
+    if (ifs.is_open()) {
+      return fileName;
+    }
+    if (PACKAGE_DATA_DIRECTORY != "") {
+      std::string prefixedFileName = PACKAGE_DATA_DIRECTORY + fileName;
+      ifs.open(UTF8Util::GetPlatformString(prefixedFileName).c_str());
+      if (ifs.is_open()) {
+        return prefixedFileName;
+      }
+    }
+
+    for (const std::string& dirPath : paths) {
+      std::string path = dirPath + '/' + fileName;
+      ifs.open(UTF8Util::GetPlatformString(path).c_str());
+      if (ifs.is_open()) {
+        return path;
+      }
+    }
+
+    const std::string jiebaPrefix = "jieba_dict/";
+    if (fileName.rfind(jiebaPrefix, 0) == 0) {
+      std::string altName = "deps/libcppjieba/dict/" +
+                            fileName.substr(jiebaPrefix.size());
+
+      ifs.open(UTF8Util::GetPlatformString(altName).c_str());
+      if (ifs.is_open()) {
+        return altName;
+      }
+      if (PACKAGE_DATA_DIRECTORY != "") {
+        std::string prefixedFileName = PACKAGE_DATA_DIRECTORY + altName;
+        ifs.open(UTF8Util::GetPlatformString(prefixedFileName).c_str());
+        if (ifs.is_open()) {
+          return prefixedFileName;
+        }
+      }
+      for (const std::string& dirPath : paths) {
+        std::string path = dirPath + '/' + altName;
+        ifs.open(UTF8Util::GetPlatformString(path).c_str());
+        if (ifs.is_open()) {
+          return path;
+        }
       }
     }
 

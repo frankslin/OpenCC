@@ -9,21 +9,39 @@
  */
 
 #include "Config.hpp"
+#include "Segments.hpp"
 #include "SimpleConverter.hpp"
 #include "TestUtils.hpp"
+#include "TestUtilsUTF8.hpp"
 
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 #include <unordered_map>
 
 #include "rapidjson/document.h"
+
+#ifdef BAZEL
+#include "tools/cpp/runfiles/runfiles.h"
+using bazel::tools::cpp::runfiles::Runfiles;
+#endif
 
 #ifdef ENABLE_JIEBA
 #include "JiebaSegmentation.hpp"
 #endif
 
 namespace opencc {
+
+namespace {
+std::string ParentDir(const std::string& path) {
+  std::string::size_type pos = path.find_last_of("/\\");
+  if (pos == std::string::npos) {
+    return "";
+  }
+  return path.substr(0, pos);
+}
+} // namespace
 
 /**
  * Test fixture for comparing segmentation algorithms using JSON test cases.
@@ -32,10 +50,26 @@ class JiebaComparisonTest : public ::testing::Test {
 protected:
   void SetUp() override {
 #ifdef ENABLE_JIEBA
+#ifdef BAZEL
+    runfiles_.reset(Runfiles::CreateForTest());
+    ASSERT_NE(nullptr, runfiles_);
+    testcasesPath_ = runfiles_->Rlocation(
+        "_main/test/testcases/jieba_comparison_testcases.json");
+    configDir_ = runfiles_->Rlocation("_main/data/config");
+    dictDir_ = runfiles_->Rlocation("_main/data/dictionary");
+    jiebaDir_ = runfiles_->Rlocation("_main/data/jieba_dict");
+#else
+    testcasesPath_ =
+        CMAKE_SOURCE_DIR "/test/testcases/jieba_comparison_testcases.json";
+    configDir_ = CMAKE_SOURCE_DIR "/data/config";
+    dictDir_ = CMAKE_SOURCE_DIR "/data/dictionary";
+    jiebaDir_ = CMAKE_SOURCE_DIR "/data/jieba_dict";
+#endif
+    dataDir_ = ParentDir(configDir_);
+    runfilesRoot_ = ParentDir(dataDir_);
     // Load test cases from JSON
-    std::string testcasesPath = CMAKE_SOURCE_DIR "/test/testcases/jieba_comparison_testcases.json";
-    std::ifstream ifs(testcasesPath);
-    ASSERT_TRUE(ifs.is_open()) << "Failed to open: " << testcasesPath;
+    std::ifstream ifs(testcasesPath_);
+    ASSERT_TRUE(ifs.is_open()) << "Failed to open: " << testcasesPath_;
 
     std::stringstream buffer;
     buffer << ifs.rdbuf();
@@ -49,9 +83,9 @@ protected:
 
     // Initialize Jieba segmenter
     jiebaSegmenter_.reset(new JiebaSegmentation(
-        CMAKE_SOURCE_DIR "/deps/libcppjieba/dict/jieba.dict.utf8",
-        CMAKE_SOURCE_DIR "/deps/libcppjieba/dict/hmm_model.utf8",
-        CMAKE_SOURCE_DIR "/deps/libcppjieba/dict/user.dict.utf8"));
+        jiebaDir_ + "/jieba.dict.utf8",
+        jiebaDir_ + "/hmm_model.utf8",
+        jiebaDir_ + "/user.dict.utf8"));
 #else
     GTEST_SKIP() << "Jieba segmentation not enabled (compile with -DENABLE_JIEBA=ON)";
 #endif
@@ -62,47 +96,69 @@ protected:
     if (it != converters_.end()) {
       return *it->second;
     }
-    const std::string configPath = config + ".json";
+    const std::string configPath = configDir_ + "/" + config + ".json";
     auto inserted = converters_.emplace(
         config,
-        std::make_unique<SimpleConverter>(configPath));
+        std::make_unique<SimpleConverter>(
+            configPath,
+            std::vector<std::string>{
+                configDir_, dictDir_, dataDir_, runfilesRoot_}));
     return *inserted.first->second;
   }
 
-  void CompareConfigs(const std::string& input,
+  std::string JoinSegments(const SegmentsPtr& segments) {
+    std::string result;
+    for (size_t i = 0; i < segments->Length(); i++) {
+      if (i > 0) {
+        result += "/";
+      }
+      result += segments->At(i);
+    }
+    return result;
+  }
+
+  void CompareOutputs(const std::string& input,
                       const std::string& expectedSegmentation,
-                      const rapidjson::Value& configs,
+                      const rapidjson::Value& expected,
                       const std::string& testId) {
     std::cout << "\n=== Test: " << testId << " ===" << std::endl;
     std::cout << "Input:          " << input << std::endl;
 
     // Show Jieba segmentation result
     SegmentsPtr segments = jiebaSegmenter_->Segment(input);
-    std::cout << "Jieba segments: ";
-    for (size_t i = 0; i < segments->Length(); i++) {
-      if (i > 0) std::cout << "/";
-      std::cout << segments->At(i);
-    }
-    std::cout << std::endl;
+    std::string jiebaSegs = JoinSegments(segments);
+    std::cout << "Jieba segments: " << jiebaSegs << std::endl;
 
     if (!expectedSegmentation.empty()) {
       std::cout << "Expected segs:  " << expectedSegmentation << std::endl;
     }
 
     // Test each config pair (e.g., s2twp vs s2twp_jieba)
-    for (auto itr = configs.MemberBegin(); itr != configs.MemberEnd(); ++itr) {
+    for (auto itr = expected.MemberBegin(); itr != expected.MemberEnd(); ++itr) {
       const std::string config = itr->name.GetString();
+      ASSERT_TRUE(itr->value.IsString());
+      const std::string expectedOutput = itr->value.GetString();
       SimpleConverter& converter = GetConverter(config);
       std::string output = converter.Convert(input);
 
       std::cout << std::setw(15) << std::left << (config + ":") << output << std::endl;
 
-      EXPECT_FALSE(output.empty()) << "Config: " << config;
+      EXPECT_EQ(expectedOutput, output)
+          << "config=" << config << " case=" << testId;
     }
   }
 
   rapidjson::Document doc_;
   std::unordered_map<std::string, std::unique_ptr<SimpleConverter>> converters_;
+#ifdef BAZEL
+  std::unique_ptr<Runfiles> runfiles_;
+#endif
+  std::string testcasesPath_;
+  std::string configDir_;
+  std::string dictDir_;
+  std::string jiebaDir_;
+  std::string dataDir_;
+  std::string runfilesRoot_;
 #ifdef ENABLE_JIEBA
   std::unique_ptr<JiebaSegmentation> jiebaSegmenter_;
 #endif
@@ -127,11 +183,11 @@ TEST_F(JiebaComparisonTest, RunAllTestCases) {
       expectedSegmentation = testcase["expected_segmentation"].GetString();
     }
 
-    ASSERT_TRUE(testcase.HasMember("configs"));
-    const auto& configs = testcase["configs"];
-    ASSERT_TRUE(configs.IsObject());
+    ASSERT_TRUE(testcase.HasMember("expected"));
+    const auto& expected = testcase["expected"];
+    ASSERT_TRUE(expected.IsObject());
 
-    CompareConfigs(input, expectedSegmentation, configs, id);
+    CompareOutputs(input, expectedSegmentation, expected, id);
   }
 }
 

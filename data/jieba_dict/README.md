@@ -14,7 +14,8 @@
 
 ## 使用方式
 
-在 OpenCC 配置文件中指定这些词典的路径：
+在 OpenCC 配置文件中指定这些词典的路径。IDF 和停用词数据
+会从 `deps/libcppjieba/dict/` 自动解析，无需复制到此目录：
 
 ```json
 {
