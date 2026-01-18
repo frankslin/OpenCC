@@ -5,6 +5,13 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-01-17
+
+- **Jieba segmentation**: Added cppjieba-based segmentation support for improved phrase handling.
+- **New configs**: Introduced `s2twp_jieba` and `tw2sp_jieba` conversion configs.
+- **WASM assets**: Bundled Jieba dictionaries and models with the wasm distribution.
+- **Tests/docs**: Added comparison testcases and Jieba usage notes.
+
 ## [0.5.0] - 2026-01-17
 
 - **Upstream alignment**: Re-release aligned with upstream branch state.
