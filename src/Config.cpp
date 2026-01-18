@@ -251,8 +251,25 @@ public:
 
     const std::string jiebaPrefix = "jieba_dict/";
     if (fileName.rfind(jiebaPrefix, 0) == 0) {
-      std::string altName = "deps/libcppjieba/dict/" +
-                            fileName.substr(jiebaPrefix.size());
+      const std::string tail = fileName.substr(jiebaPrefix.size());
+      for (const std::string& dirPath : paths) {
+        std::string base = dirPath;
+        if (!base.empty() && (base.back() == '/' || base.back() == '\\')) {
+          base.pop_back();
+        }
+        std::string::size_type pos = base.find_last_of("/\\");
+        if (pos == std::string::npos) {
+          continue;
+        }
+        std::string parent = base.substr(0, pos);
+        std::string candidate = parent + "/jieba_dict/" + tail;
+        ifs.open(UTF8Util::GetPlatformString(candidate).c_str());
+        if (ifs.is_open()) {
+          return candidate;
+        }
+      }
+
+      std::string altName = "deps/libcppjieba/dict/" + tail;
 
       ifs.open(UTF8Util::GetPlatformString(altName).c_str());
       if (ifs.is_open()) {
