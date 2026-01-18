@@ -43,6 +43,10 @@
 #include "DartsDict.hpp"
 #endif
 
+#ifdef ENABLE_JIEBA
+#include "JiebaSegmentation.hpp"
+#endif
+
 typedef rapidjson::GenericValue<rapidjson::UTF8<char>> JSONValue;
 
 namespace opencc {
@@ -274,7 +278,24 @@ public:
       // Required: dict
       DictPtr dict = ParseDict(GetObjectProperty(doc, "dict"));
       segmentation = SegmentationPtr(new MaxMatchSegmentation(dict));
-    } else {
+    }
+#ifdef ENABLE_JIEBA
+    else if (type == "jieba") {
+      // Required: dict_path and model_path
+      std::string dictPath = FindFile(GetStringProperty(doc, "dict_path"));
+      std::string modelPath = FindFile(GetStringProperty(doc, "model_path"));
+
+      // Optional: user_dict_path
+      std::string userDictPath;
+      if (doc.HasMember("user_dict_path") && doc["user_dict_path"].IsString()) {
+        userDictPath = FindFile(doc["user_dict_path"].GetString());
+      }
+
+      segmentation = SegmentationPtr(new JiebaSegmentation(
+          dictPath, modelPath, userDictPath));
+    }
+#endif
+    else {
       throw InvalidFormat("Unknown segmentation type: " + type);
     }
     return segmentation;
@@ -338,6 +359,74 @@ public:
       ifs.open(UTF8Util::GetPlatformString(path).c_str());
       if (ifs.is_open()) {
         return path;
+      }
+    }
+
+    throw FileNotFound(fileName);
+  }
+
+  std::string FindFile(std::string fileName) {
+    std::ifstream ifs;
+
+    ifs.open(UTF8Util::GetPlatformString(fileName).c_str());
+    if (ifs.is_open()) {
+      return fileName;
+    }
+    if (PACKAGE_DATA_DIRECTORY != "") {
+      std::string prefixedFileName = PACKAGE_DATA_DIRECTORY + fileName;
+      ifs.open(UTF8Util::GetPlatformString(prefixedFileName).c_str());
+      if (ifs.is_open()) {
+        return prefixedFileName;
+      }
+    }
+
+    for (const std::string& dirPath : paths) {
+      std::string path = dirPath + '/' + fileName;
+      ifs.open(UTF8Util::GetPlatformString(path).c_str());
+      if (ifs.is_open()) {
+        return path;
+      }
+    }
+
+    const std::string jiebaPrefix = "jieba_dict/";
+    if (fileName.rfind(jiebaPrefix, 0) == 0) {
+      const std::string tail = fileName.substr(jiebaPrefix.size());
+      for (const std::string& dirPath : paths) {
+        std::string base = dirPath;
+        if (!base.empty() && (base.back() == '/' || base.back() == '\\')) {
+          base.pop_back();
+        }
+        std::string::size_type pos = base.find_last_of("/\\");
+        if (pos == std::string::npos) {
+          continue;
+        }
+        std::string parent = base.substr(0, pos);
+        std::string candidate = parent + "/jieba_dict/" + tail;
+        ifs.open(UTF8Util::GetPlatformString(candidate).c_str());
+        if (ifs.is_open()) {
+          return candidate;
+        }
+      }
+
+      std::string altName = "deps/libcppjieba/dict/" + tail;
+
+      ifs.open(UTF8Util::GetPlatformString(altName).c_str());
+      if (ifs.is_open()) {
+        return altName;
+      }
+      if (PACKAGE_DATA_DIRECTORY != "") {
+        std::string prefixedFileName = PACKAGE_DATA_DIRECTORY + altName;
+        ifs.open(UTF8Util::GetPlatformString(prefixedFileName).c_str());
+        if (ifs.is_open()) {
+          return prefixedFileName;
+        }
+      }
+      for (const std::string& dirPath : paths) {
+        std::string path = dirPath + '/' + altName;
+        ifs.open(UTF8Util::GetPlatformString(path).c_str());
+        if (ifs.is_open()) {
+          return path;
+        }
       }
     }
 

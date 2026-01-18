@@ -14,6 +14,7 @@ cc_library(
         "//data/config",
         "//data/dictionary:binary_dictionaries",
         "//data/dictionary:text_dictionaries",
+        "//data/jieba_dict",
     ],
     strip_include_prefix = "src",
     deps = [

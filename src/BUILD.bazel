@@ -19,6 +19,7 @@ cc_library(
         ":dict_entry",
         ":dict_group",
         ":exception",
+        ":jieba_segmentation",
         ":lexicon",
         ":marisa_dict",
         ":max_match_segmentation",
@@ -78,12 +79,14 @@ cc_library(
     name = "config",
     srcs = ["Config.cpp"],
     hdrs = ["Config.hpp"],
+    defines = ["ENABLE_JIEBA"],
     deps = [
         ":common",
         ":conversion_chain",
         ":converter",
         ":darts_dict",
         ":dict_group",
+        ":jieba_segmentation",
         ":marisa_dict",
         ":max_match_segmentation",
         ":text_dict",
@@ -286,6 +289,18 @@ cc_test(
 )
 
 cc_library(
+    name = "jieba_segmentation",
+    srcs = ["JiebaSegmentation.cpp"],
+    hdrs = ["JiebaSegmentation.hpp"],
+    deps = [
+        ":common",
+        ":segmentation",
+        ":segments",
+        "//deps/libcppjieba:cppjieba",
+    ],
+)
+
+cc_library(
     name = "marisa_dict",
     srcs = ["MarisaDict.cpp"],
     hdrs = ["MarisaDict.hpp"],
@@ -325,6 +340,54 @@ cc_test(
         ":dict_group_test_base",
         ":max_match_segmentation",
         "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "jieba_segmentation_test",
+    srcs = ["JiebaSegmentationTest.cpp"],
+    data = [
+        "//data/jieba_dict",
+        "//deps/libcppjieba:dict",
+        "//test/testcases",
+    ],
+    defines = [
+        "BAZEL",
+        "ENABLE_JIEBA",
+    ],
+    deps = [
+        ":jieba_segmentation",
+        ":test_utils",
+        ":test_utils_utf8",
+        "@bazel_tools//tools/cpp/runfiles",
+        "@googletest//:gtest_main",
+        "@rapidjson",
+    ],
+)
+
+cc_test(
+    name = "jieba_comparison_test",
+    srcs = ["JiebaComparisonTest.cpp"],
+    data = [
+        "//data/config",
+        "//data/dictionary:binary_dictionaries",
+        "//data/jieba_dict",
+        "//deps/libcppjieba:dict",
+        "//test/testcases",
+    ],
+    defines = [
+        "BAZEL",
+        "ENABLE_JIEBA",
+    ],
+    deps = [
+        ":config",
+        ":jieba_segmentation",
+        ":simple_converter",
+        ":test_utils",
+        ":test_utils_utf8",
+        "@bazel_tools//tools/cpp/runfiles",
+        "@googletest//:gtest_main",
+        "@rapidjson",
     ],
 )
 
