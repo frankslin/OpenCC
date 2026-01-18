@@ -380,6 +380,13 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 
 ## 📜 Changelog
 
+### 0.6.0 - 2026-01-17
+
+- Added Jieba segmentation support (cppjieba) for improved phrase handling
+- New conversion configs: `s2twp_jieba`, `tw2sp_jieba`
+- Bundled Jieba dictionaries/models in the wasm distribution
+- Added Jieba comparison testcases and usage notes
+
 ### 0.4.1 - 2026-01-05
 
 - Ensure nested dict directories (e.g., `cngov`) are created before writing to the in-memory FS
