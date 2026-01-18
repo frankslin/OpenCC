@@ -5,6 +5,16 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-01-17
+
+- **Upstream alignment**: Re-release aligned with upstream branch state.
+- **Dictionary tweaks**: Minor entry corrections synced from upstream.
+- **Bugfixes**: Small stability and conversion fixes.
+
+## [0.4.2] - 2026-01-09
+
+- **Bugfixes**: Minor fixes and cleanup across the wasm build and assets.
+
 ## [0.4.1] - 2026-01-05
 
 - **WASM dict loading**: Ensure parent directories are created before writing subfolder dictionaries (e.g., `cngov/*`).
@@ -125,6 +135,7 @@ If you were importing the WASM module directly (not the high-level API), no chan
 
 ---
 
+[0.4.2]: https://github.com/frankslin/OpenCC/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/frankslin/OpenCC/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/frankslin/OpenCC/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/frankslin/OpenCC/compare/v0.2.1...v0.3.0
