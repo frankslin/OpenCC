@@ -108,6 +108,27 @@ if (ENABLE_DARTS)
   )
 endif()
 
+if (ENABLE_JIEBA)
+  set(OPENCC_ENABLE_JIEBA 1)
+  include_directories(../deps/libcppjieba/include)
+  set(
+    LIBOPENCC_HEADERS
+    ${LIBOPENCC_HEADERS}
+    JiebaSegmentation.hpp
+  )
+  set(
+    LIBOPENCC_SOURCES
+    ${LIBOPENCC_SOURCES}
+    JiebaSegmentation.cpp
+  )
+  set(
+    UNITTESTS
+    ${UNITTESTS}
+    JiebaSegmentationTest
+    JiebaComparisonTest
+  )
+endif()
+
 configure_file(
   "${PROJECT_SOURCE_DIR}/src/opencc_config.h.in"
   "${PROJECT_BINARY_DIR}/src/opencc_config.h")
