@@ -36,6 +36,10 @@
 #include "DartsDict.hpp"
 #endif
 
+#ifdef ENABLE_JIEBA
+#include "JiebaSegmentation.hpp"
+#endif
+
 typedef rapidjson::GenericValue<rapidjson::UTF8<char>> JSONValue;
 
 namespace opencc {
@@ -144,7 +148,24 @@ public:
       // Required: dict
       DictPtr dict = ParseDict(GetObjectProperty(doc, "dict"));
       segmentation = SegmentationPtr(new MaxMatchSegmentation(dict));
-    } else {
+    }
+#ifdef ENABLE_JIEBA
+    else if (type == "jieba") {
+      // Required: dict_path and model_path
+      std::string dictPath = GetStringProperty(doc, "dict_path");
+      std::string modelPath = GetStringProperty(doc, "model_path");
+
+      // Optional: user_dict_path
+      std::string userDictPath;
+      if (doc.HasMember("user_dict_path") && doc["user_dict_path"].IsString()) {
+        userDictPath = doc["user_dict_path"].GetString();
+      }
+
+      segmentation = SegmentationPtr(new JiebaSegmentation(
+          dictPath, modelPath, userDictPath));
+    }
+#endif
+    else {
       throw InvalidFormat("Unknown segmentation type: " + type);
     }
     return segmentation;
