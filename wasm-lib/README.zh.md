@@ -78,10 +78,12 @@ const result = await converter("服务器软件");  // 伺服器軟體
 | 設定檔 | 說明 | 範例 |
 |--------|------|------|
 | `s2twp` | 簡體 → 台灣正體（含地域用詞轉換） | 軟體 → 軟體 |
+| `s2twp_jieba` | 簡體 → 台灣正體（jieba 分詞） | 城堡的士兵 → 城堡的士兵 |
 | `s2tw` | 簡體 → 台灣正體 | 心里 → 心裡 |
 | `s2hk` | 簡體 → 香港繁體 | 心里  → 心裏 |
 | `s2t` | 簡體 → OpenCC 標準繁體 | 简体 → 簡體 |
 | `tw2sp` | 台灣正體 → 簡體（含地域用詞轉換） | 滑鼠 → 鼠标 |
+| `tw2sp_jieba` | 台灣正體 → 簡體（jieba 分詞） | 慰藉著 → 慰藉着 |
 | `tw2s` | 台灣正體 → 簡體 | 軟體 → 软件 |
 | `tw2t` | 台灣正體 → OpenCC 標準繁體 | 吃飯 → 喫飯 |
 | `hk2s` | 香港繁體 → 簡體 | 打印機 → 打印机 |
@@ -276,7 +278,7 @@ console.log(await t2s("繁體"));   // 繁体
 ```typescript
 import OpenCC from 'opencc-wasm';
 
-type ConfigName = 's2t' | 's2tw' | 's2twp' | 't2s';
+type ConfigName = 's2t' | 's2tw' | 's2twp' | 's2twp_jieba' | 't2s' | 'tw2sp_jieba';
 
 async function convert(config: ConfigName, text: string): Promise<string> {
   const converter = OpenCC.Converter({ config });
@@ -375,6 +377,7 @@ A：首次載入需要下載設定檔和字典檔（約 1-2MB）。後續轉換�
 
 - 使用持久的 OpenCC 控制代碼避免重複載入設定
 - 字典儲存在虛擬檔案系統的 `/data/dict/` 中
+- Jieba 資產儲存在 `/data/jieba_dict/`（詞典、hmm_model、user dict、idf、stop_words）
 - 記憶體按需成長（`ALLOW_MEMORY_GROWTH=1`）
 - 效能：專注於精確度和與官方 OpenCC 的相容性。原始吞吐量可能比純 JavaScript 實作慢，但保證完整的 OpenCC 行為。
 

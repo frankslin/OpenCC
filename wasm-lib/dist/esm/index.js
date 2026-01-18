@@ -65,6 +65,7 @@ const CONFIG_MAP = {
 // 缓存已加载的配置/字典与打开的句柄，避免重复加载和重复构建
 const loadedConfigs = new Set();
 const loadedDicts = new Set();
+const loadedJiebaFiles = new Set();
 const handles = new Map();
 let modulePromise = null;
 let api = null;
@@ -118,6 +119,18 @@ function collectOcd2Files(node, acc) {
   }
 }
 
+function getJiebaFileSpec(filePath) {
+  if (!filePath || typeof filePath !== "string") return null;
+  const match = filePath.match(/(^|\/)jieba_dict\/(.+)$/);
+  if (!match) return null;
+  const tail = match[2];
+  return {
+    tail,
+    fsPath: `/data/jieba_dict/${tail}`,
+    url: new URL(`./data/jieba_dict/${tail}`, BASE_URL),
+  };
+}
+
 async function fetchText(url) {
   if (url.protocol === "file:") {
     return readFileText(url);
@@ -141,6 +154,7 @@ async function ensureConfig(configName) {
   const { mod, api: apiFns } = await getApi();
   mod.FS.mkdirTree("/data/config");
   mod.FS.mkdirTree("/data/dict");
+  mod.FS.mkdirTree("/data/jieba_dict");
   const cfgUrl = new URL(`./data/config/${configName}`, BASE_URL);
   const cfgJson = JSON.parse(await fetchText(cfgUrl));
 
@@ -158,6 +172,23 @@ async function ensureConfig(configName) {
     mod.FS.writeFile(dictPath, buf);
     loadedDicts.add(file);
   }
+  if (cfgJson.segmentation?.type === "jieba") {
+    const jiebaPaths = [
+      cfgJson.segmentation?.dict_path,
+      cfgJson.segmentation?.model_path,
+      cfgJson.segmentation?.user_dict_path,
+      "jieba_dict/idf.utf8",
+      "jieba_dict/stop_words.utf8",
+    ].filter(Boolean);
+    for (const file of jiebaPaths) {
+      const spec = getJiebaFileSpec(file);
+      if (!spec || loadedJiebaFiles.has(spec.fsPath)) continue;
+      const buf = await fetchBuffer(spec.url);
+      ensureParentDir(mod, spec.fsPath);
+      mod.FS.writeFile(spec.fsPath, buf);
+      loadedJiebaFiles.add(spec.fsPath);
+    }
+  }
   // 重写配置中的 ocd2 路径到 /data/dict 下
   const patchPaths = (node) => {
     if (!node || typeof node !== "object") return;
@@ -171,6 +202,14 @@ async function ensureConfig(configName) {
   patchPaths(cfgJson.segmentation?.dict);
   if (Array.isArray(cfgJson.conversion_chain)) {
     cfgJson.conversion_chain.forEach((item) => patchPaths(item?.dict));
+  }
+  if (cfgJson.segmentation?.type === "jieba") {
+    const dictSpec = getJiebaFileSpec(cfgJson.segmentation?.dict_path);
+    const modelSpec = getJiebaFileSpec(cfgJson.segmentation?.model_path);
+    const userSpec = getJiebaFileSpec(cfgJson.segmentation?.user_dict_path);
+    if (dictSpec) cfgJson.segmentation.dict_path = dictSpec.fsPath;
+    if (modelSpec) cfgJson.segmentation.model_path = modelSpec.fsPath;
+    if (userSpec) cfgJson.segmentation.user_dict_path = userSpec.fsPath;
   }
   mod.FS.writeFile(`/data/config/${configName}`, JSON.stringify(cfgJson));
   loadedConfigs.add(configName);

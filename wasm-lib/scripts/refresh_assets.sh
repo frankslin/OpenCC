@@ -4,8 +4,10 @@ set -euo pipefail
 # Regenerate wasm-lib assets from Bazel outputs:
 #  - data/dictionary/*.ocd2       -> wasm-lib/data/dict/
 #  - data/config/*.json           -> wasm-lib/data/config/
+#  - data/jieba_dict/*            -> wasm-lib/data/jieba_dict/
 #  - test/testcases/testcases.json -> wasm-lib/test/testcases.json
 #  - test/testcases/cngov_testcases.json -> wasm-lib/test/cngov_testcases.json
+#  - test/testcases/jieba_comparison_testcases.json -> wasm-lib/test/jieba_comparison_testcases.json
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}/.."
@@ -67,6 +69,20 @@ rm -f "${CONFIG_DST}"/*.json
 echo "Copying config JSON from ${CONFIG_SRC} -> ${CONFIG_DST}"
 install -m 644 "${CONFIG_SRC}"/*.json "${CONFIG_DST}/"
 
+JIEBA_SRC="${ROOT}/../data/jieba_dict"
+JIEBA_DST="${ROOT}/data/jieba_dict"
+mkdir -p "${JIEBA_DST}"
+chmod -R u+w "${JIEBA_DST}"
+rm -f "${JIEBA_DST}"/*
+echo "Copying jieba dict files from ${JIEBA_SRC} -> ${JIEBA_DST}"
+install -m 644 "${JIEBA_SRC}"/* "${JIEBA_DST}/"
+JIEBA_AUX_SRC="${ROOT}/../deps/libcppjieba/dict"
+for f in idf.utf8 stop_words.utf8; do
+  if [[ -f "${JIEBA_AUX_SRC}/${f}" ]]; then
+    install -m 644 "${JIEBA_AUX_SRC}/${f}" "${JIEBA_DST}/${f}"
+  fi
+done
+
 CASE_SRC="${ROOT}/../test/testcases/testcases.json"
 CASE_DST="${ROOT}/test/testcases.json"
 mkdir -p "$(dirname "${CASE_DST}")"
@@ -79,5 +95,10 @@ CNGOV_CASE_SRC="${ROOT}/../test/testcases/cngov_testcases.json"
 CNGOV_CASE_DST="${ROOT}/test/cngov_testcases.json"
 echo "Copying cngov_testcases.json from ${CNGOV_CASE_SRC} -> ${CNGOV_CASE_DST}"
 install -m 644 "${CNGOV_CASE_SRC}" "${CNGOV_CASE_DST}"
+
+JIEBA_CASE_SRC="${ROOT}/../test/testcases/jieba_comparison_testcases.json"
+JIEBA_CASE_DST="${ROOT}/test/jieba_comparison_testcases.json"
+echo "Copying jieba_comparison_testcases.json from ${JIEBA_CASE_SRC} -> ${JIEBA_CASE_DST}"
+install -m 644 "${JIEBA_CASE_SRC}" "${JIEBA_CASE_DST}"
 
 echo "Done."
