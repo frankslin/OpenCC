@@ -22,6 +22,7 @@ OPENCC_SRCS=(
   ${OPENCC_SRC_DIR}/src/Dict.cpp
   ${OPENCC_SRC_DIR}/src/DictEntry.cpp
   ${OPENCC_SRC_DIR}/src/DictGroup.cpp
+  ${OPENCC_SRC_DIR}/src/JiebaSegmentation.cpp
   ${OPENCC_SRC_DIR}/src/Lexicon.cpp
   ${OPENCC_SRC_DIR}/src/MarisaDict.cpp
   ${OPENCC_SRC_DIR}/src/MaxMatchSegmentation.cpp
@@ -49,6 +50,7 @@ MARISA_SRCS=(
 # 头文件搜索路径
 INCLUDE_FLAGS=(
   -I${OPENCC_SRC_DIR}/src
+  -I${OPENCC_SRC_DIR}/deps/libcppjieba/include
   -I${MARISA_DIR}/include
   -I${MARISA_DIR}/lib
   -I${OPENCC_SRC_DIR}/deps/rapidjson-1.1.0
@@ -63,6 +65,7 @@ INCLUDE_FLAGS=(
 # -O2: 体积/性能权衡
 COMMON_FLAGS=(
   -DOPENCC_WASM_WITH_OPENCC
+  -DENABLE_JIEBA
   "${OPENCC_SRCS[@]}"
   "${MARISA_SRCS[@]}"
   src/main.cpp

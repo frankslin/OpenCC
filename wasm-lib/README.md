@@ -78,10 +78,12 @@ const result = await converter("服务器软件");  // 伺服器軟體
 | Config | Description | Example |
 |--------|-------------|---------|
 | `s2twp` | Simplified → Taiwan Traditional (with regional phrases) | 软件 → 軟體 |
+| `s2twp_jieba` | Simplified → Taiwan Traditional (jieba segmentation) | 城堡的士兵 → 城堡的士兵 |
 | `s2tw` | Simplified → Taiwan Traditional | 心里 → 心裡 |
 | `s2hk` | Simplified → Hong Kong Traditional | 心里  → 心裏 |
 | `s2t` | Simplified → OpenCC Standard Traditional | 简体 → 簡體 |
 | `tw2sp` | Taiwan → Simplified (with regional phrases) | 滑鼠 → 鼠标 |
+| `tw2sp_jieba` | Taiwan → Simplified (jieba segmentation) | 慰藉著 → 慰藉着 |
 | `tw2s` | Taiwan → Simplified | 軟體 → 软件 |
 | `tw2t` | Taiwan → Traditional | 吃飯 → 喫飯 |
 | `hk2s` | Hong Kong → Simplified | 打印機 → 打印机 |
@@ -276,7 +278,7 @@ console.log(await t2s("繁體"));   // 繁体
 ```typescript
 import OpenCC from 'opencc-wasm';
 
-type ConfigName = 's2t' | 's2tw' | 's2twp' | 't2s';
+type ConfigName = 's2t' | 's2tw' | 's2twp' | 's2twp_jieba' | 't2s' | 'tw2sp_jieba';
 
 async function convert(config: ConfigName, text: string): Promise<string> {
   const converter = OpenCC.Converter({ config });
@@ -342,7 +344,7 @@ wasm-lib/
 │   │   ├── index.cjs
 │   │   ├── opencc-wasm.cjs
 │   │   └── opencc-wasm.wasm
-│   └── data/           ← OpenCC configs + dicts
+│   └── data/           ← OpenCC configs + dicts (+ jieba files if enabled)
 ├── index.js            ← Source API
 ├── index.d.ts          ← TypeScript definitions
 └── scripts/
@@ -375,6 +377,7 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 
 - Uses persistent OpenCC handles to avoid reloading configs
 - Dictionaries stored in `/data/dict/` in virtual FS
+- Jieba assets stored in `/data/jieba_dict/` (dict, hmm_model, user dict, idf, stop_words)
 - Memory grows on demand (`ALLOW_MEMORY_GROWTH=1`)
 - Performance: Focuses on fidelity and compatibility with official OpenCC. May be slower than pure-JS implementations for raw throughput, but guarantees full OpenCC behavior.
 
