@@ -9,6 +9,8 @@ py_library(
         "//data/config",
         "//data/dictionary:binary_dictionaries",
         "//data/dictionary:text_dictionaries",
+        "//data/jieba_dict",
+        "//deps/libcppjieba:dict",
     ],
     imports = [".."],
     deps = ["//src:py_opencc"],

@@ -29,6 +29,7 @@ option(BUILD_SHARED_LIBS "Build opencc as shared library" ON)
 option(ENABLE_GTEST "Build all tests." OFF)
 option(ENABLE_BENCHMARK "Build benchmark tests." OFF)
 option(ENABLE_DARTS "Build DartsDict (ocd format)." ON)
+option(ENABLE_JIEBA "Build JiebaSegmentation (experimental)." OFF)
 option(BUILD_PYTHON "Build python library" OFF)
 option(USE_SYSTEM_DARTS "Use system version of Darts" OFF)
 option(USE_SYSTEM_GOOGLE_BENCHMARK "Use system version of Google Benchmark" OFF)
@@ -205,6 +206,12 @@ endif()
 if (ENABLE_DARTS)
   add_definitions(
     -DENABLE_DARTS
+  )
+endif()
+
+if (ENABLE_JIEBA)
+  add_definitions(
+    -DENABLE_JIEBA
   )
 endif()
 

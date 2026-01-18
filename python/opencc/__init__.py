@@ -38,9 +38,13 @@ class OpenCC(opencc_clib._OpenCC):
         if not config.endswith('.json'):
             config += '.json'
         if not os.path.isfile(config):
-            config_under_share_dir = os.path.join(_opencc_share_dir, config)
-            if os.path.isfile(config_under_share_dir):
-                config = config_under_share_dir
+            config_under_config_dir = os.path.join(_opencc_configdir, config)
+            if os.path.isfile(config_under_config_dir):
+                config = config_under_config_dir
+            else:
+                config_under_share_dir = os.path.join(_opencc_share_dir, config)
+                if os.path.isfile(config_under_share_dir):
+                    config = config_under_share_dir
         super().__init__(config)
         self.config = config
 
