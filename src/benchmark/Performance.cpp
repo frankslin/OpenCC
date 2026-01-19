@@ -76,6 +76,10 @@ BENCHMARK_CAPTURE(BM_Initialization, s2tw, "s2tw")
     ->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(BM_Initialization, s2twp, "s2twp")
     ->Unit(benchmark::kMillisecond);
+#ifdef ENABLE_JIEBA
+BENCHMARK_CAPTURE(BM_Initialization, s2twp_jieba, "s2twp_jieba")
+    ->Unit(benchmark::kMillisecond);
+#endif
 BENCHMARK_CAPTURE(BM_Initialization, t2hk, "t2hk")
     ->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(BM_Initialization, t2jp, "t2jp")
@@ -85,6 +89,10 @@ BENCHMARK_CAPTURE(BM_Initialization, tw2s, "tw2s")
     ->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(BM_Initialization, tw2sp, "tw2sp")
     ->Unit(benchmark::kMillisecond);
+#ifdef ENABLE_JIEBA
+BENCHMARK_CAPTURE(BM_Initialization, tw2sp_jieba, "tw2sp_jieba")
+    ->Unit(benchmark::kMillisecond);
+#endif
 BENCHMARK_CAPTURE(BM_Initialization, tw2t, "tw2t")
     ->Unit(benchmark::kMillisecond);
 
@@ -97,6 +105,26 @@ static void BM_Convert2M(benchmark::State& state) {
   }
 }
 BENCHMARK(BM_Convert2M)->Unit(benchmark::kMillisecond);
+#ifdef ENABLE_JIEBA
+static void BM_Convert2M_Jieba(benchmark::State& state) {
+  const std::string config_name = "s2twp_jieba";
+  const std::string text = ReadText("zuozhuan.txt");
+  const std::unique_ptr<SimpleConverter> converter(Initialize(config_name));
+  for (auto _ : state) {
+    Convert(converter.get(), text);
+  }
+}
+BENCHMARK(BM_Convert2M_Jieba)->Unit(benchmark::kMillisecond);
+static void BM_Convert2M_Tw2spJieba(benchmark::State& state) {
+  const std::string config_name = "tw2sp_jieba";
+  const std::string text = ReadText("zuozhuan.txt");
+  const std::unique_ptr<SimpleConverter> converter(Initialize(config_name));
+  for (auto _ : state) {
+    Convert(converter.get(), text);
+  }
+}
+BENCHMARK(BM_Convert2M_Tw2spJieba)->Unit(benchmark::kMillisecond);
+#endif
 
 static void BM_Convert(benchmark::State& state, int iteration) {
   std::ostringstream os;
@@ -114,6 +142,45 @@ BENCHMARK_CAPTURE(BM_Convert, 100, 100)->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(BM_Convert, 1000, 1000)->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(BM_Convert, 10000, 10000)->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(BM_Convert, 100000, 100000)->Unit(benchmark::kMillisecond);
+#ifdef ENABLE_JIEBA
+static void BM_Convert_Jieba(benchmark::State& state, int iteration) {
+  std::ostringstream os;
+  for (int i = 0; i < iteration; i++) {
+    os << "Open Chinese Convert 開放中文轉換" << i << std::endl;
+  }
+  const std::string text = os.str();
+  const std::string config_name = "s2twp_jieba";
+  const std::unique_ptr<SimpleConverter> converter(Initialize(config_name));
+  for (auto _ : state) {
+    Convert(converter.get(), text);
+  }
+}
+BENCHMARK_CAPTURE(BM_Convert_Jieba, 100, 100)->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Convert_Jieba, 1000, 1000)->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Convert_Jieba, 10000, 10000)->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Convert_Jieba, 100000, 100000)
+    ->Unit(benchmark::kMillisecond);
+static void BM_Convert_Tw2spJieba(benchmark::State& state, int iteration) {
+  std::ostringstream os;
+  for (int i = 0; i < iteration; i++) {
+    os << "Open Chinese Convert 開放中文轉換" << i << std::endl;
+  }
+  const std::string text = os.str();
+  const std::string config_name = "tw2sp_jieba";
+  const std::unique_ptr<SimpleConverter> converter(Initialize(config_name));
+  for (auto _ : state) {
+    Convert(converter.get(), text);
+  }
+}
+BENCHMARK_CAPTURE(BM_Convert_Tw2spJieba, 100, 100)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Convert_Tw2spJieba, 1000, 1000)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Convert_Tw2spJieba, 10000, 10000)
+    ->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_Convert_Tw2spJieba, 100000, 100000)
+    ->Unit(benchmark::kMillisecond);
+#endif
 
 } // namespace opencc
 
