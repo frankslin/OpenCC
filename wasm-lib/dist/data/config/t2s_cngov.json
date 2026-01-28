@@ -1,5 +1,5 @@
 {
-  "name": "Traditional Chinese to Traditional Chinese (Chinese Government standard) with Simplified Chinese remaining unchanged",
+  "name": "Traditional Chinese to Simplified Chinese",
   "author": "TerryTian-tech",
   "license": "Apache License 2.0",
   "source": "https://github.com/TerryTian-tech/OpenCC-Traditional-Chinese-characters-according-to-Chinese-government-standards",
@@ -11,7 +11,7 @@
     "type": "mmseg",
     "dict": {
       "type": "ocd2",
-      "file": "cngov/TGPhrases.ocd2"
+      "file": "cngov/TSPhrases.ocd2"
     }
   },
   "conversion_chain": [{
@@ -19,10 +19,10 @@
       "type": "group",
       "dicts": [{
         "type": "ocd2",
-        "file": "cngov/TGPhrases.ocd2"
+        "file": "cngov/TSPhrases.ocd2"
       }, {
         "type": "ocd2",
-        "file": "cngov/TGCharacters_keep_simp.ocd2"
+        "file": "cngov/TSCharacters.ocd2"
       }]
     }
   }]
