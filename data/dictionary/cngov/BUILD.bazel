@@ -12,6 +12,12 @@ TEXT_DICTS = [
     "TGCharacters.txt",
     "TGCharacters_keep_simp.txt",
     "TGPhrases.txt",
+    "STCharacters.txt",
+    "STPhrases.txt",
+    "TSCharacters.txt",
+    "TSPhrases.txt",
+    "GovVariants.txt",
+    "GovVariants_keep_simp.txt",
 ]
 
 [
