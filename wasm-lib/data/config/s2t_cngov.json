@@ -18,10 +18,10 @@
     "dict": {
       "type": "group",
       "dicts": [{
-        "type": "text",
+        "type": "ocd2",
         "file": "cngov/STPhrases.ocd2"
       }, {
-        "type": "text",
+        "type": "ocd2",
         "file": "cngov/STCharacters.ocd2"
       }]
     }
