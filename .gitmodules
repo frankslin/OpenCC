@@ -1,0 +1,3 @@
+[submodule "deps/cngov"]
+	path = deps/cngov
+	url = git@github.com:TerryTian-tech/OpenCC-Traditional-Chinese-characters-according-to-Chinese-government-standards.git
