@@ -2,6 +2,8 @@
 
 本文档说明如何在 OpenCC 中启用和使用 Jieba 中文分词功能。
 
+> 架構重設計提案（Jieba 外掛化）請見：`doc/JIEBA_PLUGIN_ARCHITECTURE_PLAN.md`。
+
 ## 概述
 
 OpenCC 默认使用最大正向匹配（mmseg）算法进行分词。从版本 X.X.X 开始，我们引入了对 **Jieba 分词**的实验性支持。
