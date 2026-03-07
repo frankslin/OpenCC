@@ -144,7 +144,7 @@ const opencc_segmentation_plugin_v1* opencc_get_segmentation_plugin_v1(void);
 ### 4.3 安全與可控性
 
 - 可加入 `OPENCC_DISABLE_PLUGINS=1` 供高安全場景停用動態載入。
-- 僅接受檔名白名單（`libopencc-*.so`）以降低任意 so 注入風險。
+- 僅接受檔名白名單（Linux/macOS：`libopencc-*.so` / `libopencc-*.dylib`，Windows：`opencc-*.dll`）以降低任意動態庫注入風險。
 - 驗證 `abi_version`，不符立即拒載。
 
 ---
@@ -175,6 +175,42 @@ const opencc_segmentation_plugin_v1* opencc_get_segmentation_plugin_v1(void);
   - `libopencc-jieba.so`
   - `jieba_dict/*`
   - 可選：`s2twp_jieba.json` / `tw2sp_jieba.json`
+
+## 5.4 Windows 平台與 WinGet 生態（重點補充）
+
+### 5.4.1 Windows 動態載入實作
+
+- 以 `LoadLibraryExW` + `GetProcAddress` 實作 `SharedLibrary`，避免在 Windows 分支額外分散邏輯。
+- 優先使用 `LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR`（或等價策略），降低 DLL Hijacking 風險。
+- 可在初始化階段呼叫 `SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)`（若可行）統一搜尋行為。
+
+### 5.4.2 Windows 安裝路徑建議
+
+- `opencc` 套件（核心）：
+  - `opencc.dll` / `opencc.exe`
+  - `%ProgramFiles%\OpenCC\bin`
+- `opencc-jieba` 套件（外掛）：
+  - `opencc-jieba.dll`
+  - `%ProgramFiles%\OpenCC\plugins`
+  - `%ProgramFiles%\OpenCC\share\opencc\jieba_dict\*`
+- 核心預設外掛搜尋路徑可加入 `%ProgramFiles%\OpenCC\plugins`，並允許以 `OPENCC_SEGMENTATION_PLUGIN_PATH` 覆蓋。
+
+### 5.4.3 WinGet 打包建議
+
+- 建議拆成兩個 package ID：
+  - `OpenCC.OpenCC`（核心）
+  - `OpenCC.OpenCC.Jieba`（外掛）
+- `OpenCC.OpenCC.Jieba` manifest 可宣告對 `OpenCC.OpenCC` 的相依，確保安裝順序。
+- `winget install OpenCC.OpenCC`：預設最小安裝（不含 Jieba）。
+- `winget install OpenCC.OpenCC.Jieba`：補齊 Jieba plugin 與字典。
+- 若使用者嘗試 `jieba` 配置但缺外掛，錯誤訊息應明確提示：`Please install package OpenCC.OpenCC.Jieba (winget install OpenCC.OpenCC.Jieba)`。
+
+### 5.4.4 Windows CI / 驗證
+
+- 在 Windows runner 建立兩組測試：
+  1. 僅安裝核心（確認 `jieba` 配置報錯且訊息可行動）。
+  2. 安裝核心 + 外掛（確認 `s2twp_jieba.json` 正常）。
+- 增加一個 DLL 搜尋路徑安全測試：確認不會從 CWD 誤載未知同名 DLL。
 
 ---
 
