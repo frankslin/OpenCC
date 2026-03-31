@@ -5,6 +5,12 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2026-03-31
+
+- **Upstream alignment**: Based on `master` tracking upstream OpenCC commit `dfc241c60c287920c82416b52b384ceea5a239ea` (`Build and test OpenCC with Bazel on Windows (#1082)`).
+- **Dictionary sync**: Refreshed bundled `cngov` dictionaries to match `Transformer(1.2.8)`.
+- **WASM assets**: Rebuilt publishable `dist/` artifacts after the upstream dictionary sync.
+
 ## [0.6.0] - 2026-01-17
 
 - **Jieba segmentation**: Added cppjieba-based segmentation support for improved phrase handling.
