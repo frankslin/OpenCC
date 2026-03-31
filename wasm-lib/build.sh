@@ -34,7 +34,7 @@ OPENCC_SRCS=(
 )
 
 # marisa trie 源文件
-MARISA_DIR="${OPENCC_SRC_DIR}/deps/marisa-0.2.6"
+MARISA_DIR="${OPENCC_SRC_DIR}/deps/marisa-0.3.1"
 MARISA_SRCS=(
   ${MARISA_DIR}/lib/marisa/agent.cc
   ${MARISA_DIR}/lib/marisa/keyset.cc
