@@ -65,6 +65,7 @@ const CONFIG_MAP = {
 // 缓存已加载的配置/字典与打开的句柄，避免重复加载和重复构建
 const loadedConfigs = new Set();
 const loadedDicts = new Set();
+const loadedResources = new Set();
 const handles = new Map();
 let modulePromise = null;
 let api = null;
@@ -118,6 +119,21 @@ function collectOcd2Files(node, acc) {
   }
 }
 
+function collectSegmentationResources(segmentation, acc) {
+  if (!segmentation || typeof segmentation !== "object") return;
+  const resources = segmentation.resources;
+  if (!resources || typeof resources !== "object") return;
+  Object.values(resources).forEach((value) => {
+    if (typeof value === "string" && value) {
+      acc.add(value);
+    }
+  });
+  if (segmentation.type === "jieba") {
+    acc.add("jieba_dict/idf.utf8");
+    acc.add("jieba_dict/stop_words.utf8");
+  }
+}
+
 async function fetchText(url) {
   if (url.protocol === "file:") {
     return readFileText(url);
@@ -145,7 +161,9 @@ async function ensureConfig(configName) {
   const cfgJson = JSON.parse(await fetchText(cfgUrl));
 
   const dicts = new Set();
+  const resources = new Set();
   collectOcd2Files(cfgJson.segmentation?.dict, dicts);
+  collectSegmentationResources(cfgJson.segmentation, resources);
   if (Array.isArray(cfgJson.conversion_chain)) {
     cfgJson.conversion_chain.forEach((item) => collectOcd2Files(item?.dict, dicts));
   }
@@ -157,6 +175,15 @@ async function ensureConfig(configName) {
     ensureParentDir(mod, dictPath);
     mod.FS.writeFile(dictPath, buf);
     loadedDicts.add(file);
+  }
+  for (const file of resources) {
+    if (loadedResources.has(file)) continue;
+    const resourceUrl = new URL(`./data/${file}`, BASE_URL);
+    const buf = await fetchBuffer(resourceUrl);
+    const resourcePath = `/data/${file}`;
+    ensureParentDir(mod, resourcePath);
+    mod.FS.writeFile(resourcePath, buf);
+    loadedResources.add(file);
   }
   // 重写配置中的 ocd2 路径到 /data/dict 下
   const patchPaths = (node) => {

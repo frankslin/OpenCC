@@ -25,11 +25,18 @@ OPENCC_SRCS=(
   ${OPENCC_SRC_DIR}/src/Lexicon.cpp
   ${OPENCC_SRC_DIR}/src/MarisaDict.cpp
   ${OPENCC_SRC_DIR}/src/MaxMatchSegmentation.cpp
+  ${OPENCC_SRC_DIR}/src/PluginSegmentation.cpp
+  ${OPENCC_SRC_DIR}/src/Segmentation.cpp
   ${OPENCC_SRC_DIR}/src/SerializedValues.cpp
   ${OPENCC_SRC_DIR}/src/SimpleConverter.cpp
   ${OPENCC_SRC_DIR}/src/TextDict.cpp
   ${OPENCC_SRC_DIR}/src/UTF8StringSlice.cpp
   ${OPENCC_SRC_DIR}/src/UTF8Util.cpp
+)
+
+JIEBA_PLUGIN_SRCS=(
+  ${OPENCC_SRC_DIR}/plugins/jieba/src/JiebaSegmentation.cpp
+  ${OPENCC_SRC_DIR}/plugins/jieba/src/JiebaSegmentationPlugin.cpp
 )
 
 # marisa trie 源文件
@@ -49,6 +56,9 @@ MARISA_SRCS=(
 # 头文件搜索路径
 INCLUDE_FLAGS=(
   -I${OPENCC_SRC_DIR}/src
+  -I${OPENCC_SRC_DIR}/plugins/jieba/include
+  -I${OPENCC_SRC_DIR}/plugins/jieba/deps/cppjieba/include
+  -I${OPENCC_SRC_DIR}/plugins/jieba/deps/cppjieba/deps/limonp/include
   -I${MARISA_DIR}/include
   -I${MARISA_DIR}/lib
   -I${OPENCC_SRC_DIR}/deps/rapidjson-1.1.0
@@ -64,6 +74,7 @@ INCLUDE_FLAGS=(
 COMMON_FLAGS=(
   -DOPENCC_WASM_WITH_OPENCC
   "${OPENCC_SRCS[@]}"
+  "${JIEBA_PLUGIN_SRCS[@]}"
   "${MARISA_SRCS[@]}"
   src/main.cpp
   "${INCLUDE_FLAGS[@]}"
