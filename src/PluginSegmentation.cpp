@@ -42,6 +42,11 @@ namespace opencc {
 
 namespace {
 
+#if defined(__EMSCRIPTEN__)
+extern "C" const opencc_segmentation_plugin_v2*
+opencc_get_segmentation_plugin_v2(void);
+#endif
+
 std::string DirName(const std::string& path) {
   const std::string::size_type pos = path.find_last_of("/\\");
   if (pos == std::string::npos) {
@@ -342,6 +347,12 @@ public:
       return it->second;
     }
 
+    std::shared_ptr<PluginLibrary> builtin = LoadBuiltin(type);
+    if (builtin != nullptr) {
+      cache_[type] = builtin;
+      return builtin;
+    }
+
     const std::vector<std::string> searchDirs = BuildSearchDirs();
     const std::vector<std::string> fileNames = GetPluginFileNames(type);
     std::ostringstream attempted;
@@ -399,6 +410,17 @@ public:
   }
 
 private:
+  static std::shared_ptr<PluginLibrary> LoadBuiltin(const std::string& type) {
+#if defined(__EMSCRIPTEN__)
+    if (type == "jieba") {
+      const opencc_segmentation_plugin_v2* descriptor =
+          opencc_get_segmentation_plugin_v2();
+      return ValidateDescriptor(descriptor, type);
+    }
+#endif
+    return nullptr;
+  }
+
   static std::vector<std::string> GetPluginFileNames(const std::string& type) {
 #if defined(_WIN32) || defined(_WIN64)
     return {
@@ -437,6 +459,14 @@ private:
     EntryPoint entryPoint = reinterpret_cast<EntryPoint>(
         library->FindSymbol("opencc_get_segmentation_plugin_v2"));
     const opencc_segmentation_plugin_v2* descriptor = entryPoint();
+    std::shared_ptr<PluginLibrary> plugin = ValidateDescriptor(descriptor, type);
+    plugin->library = library;
+    return plugin;
+  }
+
+  static std::shared_ptr<PluginLibrary> ValidateDescriptor(
+      const opencc_segmentation_plugin_v2* descriptor,
+      const std::string& type) {
     if (descriptor == nullptr) {
       throw Exception("Plugin returned null descriptor.");
     }
@@ -454,7 +484,6 @@ private:
       throw Exception("Plugin type mismatch.");
     }
     std::shared_ptr<PluginLibrary> plugin(new PluginLibrary);
-    plugin->library = library;
     plugin->descriptor = descriptor;
     return plugin;
   }

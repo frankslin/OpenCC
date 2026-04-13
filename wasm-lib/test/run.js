@@ -9,7 +9,17 @@ const __dirname = path.dirname(__filename);
 async function main() {
   const casesPath = path.join(__dirname, "testcases.json");
   const parsed = JSON.parse(fs.readFileSync(casesPath, "utf-8"));
-  const cases = parsed?.cases || [];
+  const cngovParsed = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "cngov_testcases.json"), "utf-8")
+  );
+  const jiebaParsed = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "jieba_comparison_testcases.json"), "utf-8")
+  );
+  const cases = [
+    ...(parsed?.cases || []),
+    ...(cngovParsed?.cases || []),
+    ...(jiebaParsed?.cases || []),
+  ];
   if (cases.length === 0) {
     console.error("No testcases found");
     process.exit(1);
