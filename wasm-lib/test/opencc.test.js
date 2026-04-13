@@ -16,6 +16,7 @@ function loadCases(filename) {
 const cases = [
   ...loadCases("testcases.json"),
   ...loadCases("cngov_testcases.json"),
+  ...loadCases("jieba_comparison_testcases.json"),
 ];
 
 const converterCache = new Map();
