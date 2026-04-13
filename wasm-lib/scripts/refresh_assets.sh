@@ -3,9 +3,11 @@ set -euo pipefail
 
 # Regenerate wasm-lib assets from Bazel outputs:
 #  - data/dictionary/*.ocd2       -> wasm-lib/data/dict/
-#  - data/config/*.json           -> wasm-lib/data/config/
+#  - data/config/*.json + plugins/jieba/data/config/*.json -> wasm-lib/data/config/
 #  - test/testcases/testcases.json -> wasm-lib/test/testcases.json
 #  - test/testcases/cngov_testcases.json -> wasm-lib/test/cngov_testcases.json
+#  - plugins/jieba/tests/data/jieba_comparison_testcases.json -> wasm-lib/test/jieba_comparison_testcases.json
+#  - plugins/jieba/deps/cppjieba/dict/*.utf8 -> wasm-lib/data/jieba_dict/
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}/.."
@@ -59,13 +61,21 @@ for f in "${NEEDED_DICTS[@]}"; do
   install -m 644 "${src}" "${dst}"
 done
 
-CONFIG_SRC="${ROOT}/../data/config"
 CONFIG_DST="${ROOT}/data/config"
 mkdir -p "${CONFIG_DST}"
 chmod -R u+w "${CONFIG_DST}"
 rm -f "${CONFIG_DST}"/*.json
-echo "Copying config JSON from ${CONFIG_SRC} -> ${CONFIG_DST}"
-install -m 644 "${CONFIG_SRC}"/*.json "${CONFIG_DST}/"
+echo "Copying config JSON into ${CONFIG_DST}"
+install -m 644 "${ROOT}/../data/config"/*.json "${CONFIG_DST}/"
+install -m 644 "${ROOT}/../plugins/jieba/data/config"/*.json "${CONFIG_DST}/"
+
+JIEBA_DST="${ROOT}/data/jieba_dict"
+JIEBA_SRC="${ROOT}/../plugins/jieba/deps/cppjieba/dict"
+mkdir -p "${JIEBA_DST}"
+chmod -R u+w "${JIEBA_DST}"
+rm -f "${JIEBA_DST}"/*.utf8
+echo "Copying Jieba resources from ${JIEBA_SRC} -> ${JIEBA_DST}"
+install -m 644 "${JIEBA_SRC}"/*.utf8 "${JIEBA_DST}/"
 
 CASE_SRC="${ROOT}/../test/testcases/testcases.json"
 CASE_DST="${ROOT}/test/testcases.json"
@@ -79,5 +89,10 @@ CNGOV_CASE_SRC="${ROOT}/../test/testcases/cngov_testcases.json"
 CNGOV_CASE_DST="${ROOT}/test/cngov_testcases.json"
 echo "Copying cngov_testcases.json from ${CNGOV_CASE_SRC} -> ${CNGOV_CASE_DST}"
 install -m 644 "${CNGOV_CASE_SRC}" "${CNGOV_CASE_DST}"
+
+JIEBA_CASE_SRC="${ROOT}/../plugins/jieba/tests/data/jieba_comparison_testcases.json"
+JIEBA_CASE_DST="${ROOT}/test/jieba_comparison_testcases.json"
+echo "Copying jieba_comparison_testcases.json from ${JIEBA_CASE_SRC} -> ${JIEBA_CASE_DST}"
+install -m 644 "${JIEBA_CASE_SRC}" "${JIEBA_CASE_DST}"
 
 echo "Done."
