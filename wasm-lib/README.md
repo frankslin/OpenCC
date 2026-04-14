@@ -380,6 +380,19 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 
 ## 📜 Changelog
 
+### 0.7.0 - 2026-04-13
+
+- Rebased the wasm branch onto upstream `master`
+- Switched WASM Jieba support to reuse the upstream plugin implementation
+- Registered the Jieba plugin statically inside the WASM module instead of using dynamic loading
+- Restored bundled Jieba configs, dictionaries, and comparison tests in `wasm-lib` / `dist`
+- Regenerated release artifacts and revalidated the full Node test suite
+
+### 0.6.3 - 2026-03-31
+
+- Upstream alignment and cngov dictionary refresh
+- Rebuilt publishable `dist/` artifacts after the dictionary sync
+
 ### 0.6.0 - 2026-01-17
 
 - Added Jieba segmentation support (cppjieba) for improved phrase handling
