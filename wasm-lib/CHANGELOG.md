@@ -5,6 +5,14 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-04-13
+
+- **Upstream plugin alignment**: Rebases the wasm branch onto upstream `master` and switches Jieba support to reuse the upstream segmentation plugin implementation.
+- **Static plugin registration for WASM**: Emscripten builds now register the upstream `jieba` plugin in-process instead of relying on runtime dynamic loading.
+- **WASM resource loading**: The runtime now preloads `jieba_dict/*.utf8` resources alongside `.ocd2` dictionaries when a Jieba-backed config is used.
+- **Bundled Jieba assets**: `s2twp_jieba.json`, `tw2sp_jieba.json`, Jieba dictionaries, and comparison testcases are included again in `wasm-lib` and `dist/`.
+- **Validation**: Regenerated `dist/` artifacts and verified the Node test suite, including Jieba-backed conversion cases.
+
 ## [0.6.3] - 2026-03-31
 
 - **Upstream alignment**: Based on `master` tracking upstream OpenCC commit `dfc241c60c287920c82416b52b384ceea5a239ea` (`Build and test OpenCC with Bazel on Windows (#1082)`).
