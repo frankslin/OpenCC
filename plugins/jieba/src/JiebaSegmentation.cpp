@@ -284,7 +284,7 @@ JiebaSegmentation::JiebaSegmentation(const std::string& dictPath,
                     stopWordsPath.empty()
                         ? ResolveAuxPath(dictPath, modelPath, "stop_words.utf8")
                         : stopWordsPath)) {
-  }
+}
 
 JiebaSegmentation::~JiebaSegmentation() = default;
 
