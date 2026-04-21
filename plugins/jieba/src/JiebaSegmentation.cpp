@@ -165,7 +165,6 @@ bool ParseNonNegativeDouble(const std::string& text, double* value) {
   *value = parsed;
   return true;
 }
-
 struct RawMergedEntry {
   std::string word;
   std::string tag;
@@ -312,7 +311,7 @@ JiebaSegmentation::JiebaSegmentation(const std::string& dictPath,
                     stopWordsPath.empty()
                         ? ResolveAuxPath(dictPath, modelPath, "stop_words.utf8")
                         : stopWordsPath)) {
-}
+  }
 
 JiebaSegmentation::~JiebaSegmentation() = default;
 
