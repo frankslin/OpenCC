@@ -124,11 +124,15 @@ protected:
   std::string TestCommand(const std::string& config,
                           const std::string& inputFile,
                           const std::string& outputFile,
-                          const std::string& measuredResultFile = "") const {
+                          const std::string& measuredResultFile = "",
+                          const std::string& extraFlags = "") const {
     std::string cmd = QuotePath(OpenccCommand()) + " -i " +
                       QuotePath(inputFile) + " -o " +
                       QuotePath(outputFile) + " -c " +
                       QuotePath(ConfigurationDirectory() + config + ".json");
+    if (!extraFlags.empty()) {
+      cmd += " " + extraFlags;
+    }
     if (!measuredResultFile.empty()) {
       cmd += " --measured_result " + QuotePath(measuredResultFile);
     }
@@ -152,6 +156,16 @@ protected:
 #else
     return cmd;
 #endif
+  }
+
+  std::string TestCommandWithFlags(const std::string& config,
+                                   const std::string& inputFile,
+                                   const std::string& outputFile,
+                                   const std::string& extraFlags,
+                                   const std::string& measuredResultFile = "")
+      const {
+    return TestCommand(config, inputFile, outputFile, measuredResultFile,
+                       extraFlags);
   }
 
   char* originalWorkingDirectory;
@@ -337,4 +351,212 @@ TEST_F(CommandLineConvertTest, ConvertCNGovFromJson) {
   }
 }
 
+TEST_F(CommandLineConvertTest, SegmentationOutputIsJson) {
+  const std::string config = "s2t";
+  const std::string inputFile = InputFile("segmentation_test");
+  const std::string outputFile = OutputFile("segmentation_test");
+
+  {
+    std::ofstream ofs(inputFile, std::ios::binary);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "\xe5\xbc\x80\xe6\x94\xbe\xe4\xb8\xad\xe6\x96\x87\xe8\xbd\xac\xe6"
+           "\x8d\xa2"  // 开放中文转换
+        << "\n";
+  }
+
+  ASSERT_EQ(0, system(TestCommandWithFlags(config, inputFile, outputFile,
+                                           "--segmentation").c_str()));
+
+  const std::string content = GetFileContents(outputFile);
+  rapidjson::Document doc;
+  doc.Parse(content.c_str());
+  ASSERT_FALSE(doc.HasParseError()) << "Output is not valid JSON: " << content;
+  ASSERT_TRUE(doc.IsObject());
+  ASSERT_TRUE(doc.HasMember("input"));
+  ASSERT_TRUE(doc["input"].IsString());
+  ASSERT_TRUE(doc.HasMember("segments"));
+  ASSERT_TRUE(doc["segments"].IsArray());
+  EXPECT_FALSE(doc["segments"].GetArray().Empty());
+  // Should NOT have 'stages' or 'output' keys
+  EXPECT_FALSE(doc.HasMember("stages"));
+  EXPECT_FALSE(doc.HasMember("output"));
+}
+
+TEST_F(CommandLineConvertTest, SegmentationWithExplicitJsonFormat) {
+  const std::string config = "s2t";
+  const std::string inputFile = InputFile("segmentation_json_test");
+  const std::string outputFile = OutputFile("segmentation_json_test");
+
+  {
+    std::ofstream ofs(inputFile, std::ios::binary);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "\xe5\xbc\x80\xe6\x94\xbe\xe4\xb8\xad\xe6\x96\x87\xe8\xbd\xac\xe6"
+           "\x8d\xa2"  // 开放中文转换
+        << "\n";
+  }
+
+  ASSERT_EQ(0,
+            system(TestCommandWithFlags(config, inputFile, outputFile,
+                                        "--segmentation --inspect-format json")
+                       .c_str()));
+
+  const std::string content = GetFileContents(outputFile);
+  rapidjson::Document doc;
+  doc.Parse(content.c_str());
+  ASSERT_FALSE(doc.HasParseError());
+  ASSERT_TRUE(doc.IsObject());
+  ASSERT_TRUE(doc.HasMember("segments"));
+}
+
+TEST_F(CommandLineConvertTest, InspectOutputIsJson) {
+  const std::string config = "s2t";
+  const std::string inputFile = InputFile("inspect_test");
+  const std::string outputFile = OutputFile("inspect_test");
+
+  {
+    std::ofstream ofs(inputFile, std::ios::binary);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "\xe5\xbc\x80\xe6\x94\xbe\xe4\xb8\xad\xe6\x96\x87\xe8\xbd\xac\xe6"
+           "\x8d\xa2"  // 开放中文转换
+        << "\n";
+  }
+
+  ASSERT_EQ(0, system(TestCommandWithFlags(config, inputFile, outputFile,
+                                           "--inspect").c_str()));
+
+  const std::string content = GetFileContents(outputFile);
+  rapidjson::Document doc;
+  doc.Parse(content.c_str());
+  ASSERT_FALSE(doc.HasParseError()) << "Output is not valid JSON: " << content;
+  ASSERT_TRUE(doc.IsObject());
+  ASSERT_TRUE(doc.HasMember("input"));
+  ASSERT_TRUE(doc["input"].IsString());
+  ASSERT_TRUE(doc.HasMember("segments"));
+  ASSERT_TRUE(doc["segments"].IsArray());
+  ASSERT_TRUE(doc.HasMember("stages"));
+  ASSERT_TRUE(doc["stages"].IsArray());
+  ASSERT_TRUE(doc.HasMember("output"));
+  ASSERT_TRUE(doc["output"].IsString());
+  // Validate stage schema
+  for (auto& stage : doc["stages"].GetArray()) {
+    ASSERT_TRUE(stage.IsObject());
+    ASSERT_TRUE(stage.HasMember("index"));
+    ASSERT_TRUE(stage["index"].IsUint64());
+    ASSERT_TRUE(stage.HasMember("segments"));
+    ASSERT_TRUE(stage["segments"].IsArray());
+  }
+}
+
+TEST_F(CommandLineConvertTest, InspectWithExplicitJsonFormat) {
+  const std::string config = "s2t";
+  const std::string inputFile = InputFile("inspect_json_test");
+  const std::string outputFile = OutputFile("inspect_json_test");
+
+  {
+    std::ofstream ofs(inputFile, std::ios::binary);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "\xe5\xbc\x80\xe6\x94\xbe\xe4\xb8\xad\xe6\x96\x87\xe8\xbd\xac\xe6"
+           "\x8d\xa2"  // 开放中文转换
+        << "\n";
+  }
+
+  ASSERT_EQ(0,
+            system(TestCommandWithFlags(config, inputFile, outputFile,
+                                        "--inspect --inspect-format json")
+                       .c_str()));
+
+  const std::string content = GetFileContents(outputFile);
+  rapidjson::Document doc;
+  doc.Parse(content.c_str());
+  ASSERT_FALSE(doc.HasParseError());
+  ASSERT_TRUE(doc.IsObject());
+  ASSERT_TRUE(doc.HasMember("stages"));
+}
+
+TEST_F(CommandLineConvertTest, SegmentationAndInspectAreMutuallyExclusive) {
+  const std::string config = "s2t";
+  const std::string inputFile = InputFile("mutex_test");
+  const std::string outputFile = OutputFile("mutex_test");
+
+  {
+    std::ofstream ofs(inputFile, std::ios::binary);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "test\n";
+  }
+
+  // Should fail with non-zero exit code
+  const int exitCode =
+      system(TestCommandWithFlags(config, inputFile, outputFile,
+                                  "--segmentation --inspect")
+                 .c_str());
+  EXPECT_NE(0, exitCode);
+}
+
+TEST_F(CommandLineConvertTest, InspectFormatWithoutModeErrors) {
+  const std::string config = "s2t";
+  const std::string inputFile = InputFile("format_no_mode_test");
+  const std::string outputFile = OutputFile("format_no_mode_test");
+
+  {
+    std::ofstream ofs(inputFile, std::ios::binary);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "test\n";
+  }
+
+  // --inspect-format without --segmentation or --inspect should fail
+  const int exitCode =
+      system(TestCommandWithFlags(config, inputFile, outputFile,
+                                  "--inspect-format json")
+                 .c_str());
+  EXPECT_NE(0, exitCode);
+}
+
+TEST_F(CommandLineConvertTest, InvalidInspectFormatErrors) {
+  const std::string config = "s2t";
+  const std::string inputFile = InputFile("bad_format_test");
+  const std::string outputFile = OutputFile("bad_format_test");
+
+  {
+    std::ofstream ofs(inputFile, std::ios::binary);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "test\n";
+  }
+
+  // --inspect-format with unsupported value should fail
+  const int exitCode =
+      system(TestCommandWithFlags(config, inputFile, outputFile,
+                                  "--inspect --inspect-format xml")
+                 .c_str());
+  EXPECT_NE(0, exitCode);
+}
+
+TEST_F(CommandLineConvertTest, MeasuredResultIncludesOutputMode) {
+  const std::string config = "s2t";
+  const std::string inputFile = InputFile("inspect_measured_test");
+  const std::string outputFile = OutputFile("inspect_measured_test");
+  const std::string measuredResultFile =
+      OutputDirectory() + "inspect_measured_result.json";
+
+  {
+    std::ofstream ofs(inputFile, std::ios::binary);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "\xe5\xbc\x80\xe6\x94\xbe\xe4\xb8\xad\xe6\x96\x87\xe8\xbd\xac\xe6"
+           "\x8d\xa2"  // 开放中文转换
+        << "\n";
+  }
+
+  ASSERT_EQ(0,
+            system(TestCommandWithFlags(config, inputFile, outputFile,
+                                        "--inspect", measuredResultFile)
+                       .c_str()));
+
+  const std::string content = GetFileContents(measuredResultFile);
+  rapidjson::Document doc;
+  doc.Parse(content.c_str());
+  ASSERT_FALSE(doc.HasParseError());
+  ASSERT_TRUE(doc.IsObject());
+  ASSERT_TRUE(doc.HasMember("output_mode"));
+  ASSERT_TRUE(doc["output_mode"].IsString());
+  EXPECT_STREQ("inspect", doc["output_mode"].GetString());
+}
 } // namespace opencc
