@@ -32,6 +32,7 @@
 #include "src/Config.hpp"
 #include "src/ConversionInspection.hpp"
 #include "src/Converter.hpp"
+#include "src/Segments.hpp"
 #include "src/UTF8Util.hpp"
 
 using namespace opencc;
@@ -253,7 +254,13 @@ std::string ConvertLineByMode(const std::string& line) {
   const auto convertStart = std::chrono::steady_clock::now();
   std::string output;
   if (outputMode == OutputMode::Segmentation) {
-    const ConversionInspectionResult& result = converter->Inspect(line);
+    // True segmentation-only path: call the segmenter directly without
+    // running any conversion stage.
+    const SegmentsPtr& segments =
+        converter->GetSegmentation()->Segment(line);
+    ConversionInspectionResult result;
+    result.input = line;
+    result.segments = segments->ToVector();
     output = SerializeSegmentationResultJson(result);
   } else if (outputMode == OutputMode::Inspect) {
     const ConversionInspectionResult& result = converter->Inspect(line);
@@ -282,14 +289,13 @@ void ConvertLineByLine() {
   std::istream& inputStream = std::cin;
   FILE* fout = GetOutputStream();
   bool isFirstLine = true;
-  while (!inputStream.eof()) {
+  std::string line;
+  while (std::getline(inputStream, line)) {
     if (!isFirstLine) {
       fputs("\n", fout);
     } else {
       isFirstLine = false;
     }
-    std::string line;
-    std::getline(inputStream, line);
     measurement.inputBytes += line.size();
     const std::string& output = ConvertLineByMode(line);
     measurement.outputBytes += output.size();
