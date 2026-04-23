@@ -5,6 +5,12 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-04-22
+
+- **Packaging fix**: `npm run build` / `prepack` now refresh bundled assets before generating `dist/`, so `jieba_merged.ocd2` is included in published packages.
+- **Jieba config compatibility**: Adjusted CN Government Standard Jieba configs to use the bundled `user.dict.utf8` resource path.
+- **Documentation**: Added README examples for `t2cngov_jieba` and `t2cngov_keep_simp_jieba`.
+
 ## [0.8.0] - 2026-04-22
 
 - **Inspect API**: Added `converter.inspect(text)` to the WASM wrapper, returning segmentation, per-stage outputs, and final converted text as structured JSON.
