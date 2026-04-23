@@ -7,13 +7,14 @@ set -euo pipefail
 #  - test/testcases/testcases.json -> wasm-lib/test/testcases.json
 #  - test/testcases/cngov_testcases.json -> wasm-lib/test/cngov_testcases.json
 #  - plugins/jieba/tests/data/jieba_comparison_testcases.json -> wasm-lib/test/jieba_comparison_testcases.json
-#  - plugins/jieba/deps/cppjieba/dict/*.utf8 -> wasm-lib/data/jieba_dict/
+#  - plugins/jieba/deps/cppjieba/dict/*.utf8 + Bazel-built jieba_merged.ocd2 -> wasm-lib/data/jieba_dict/
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}/.."
 
 echo "Building dictionaries via Bazel..."
 bazel build //data/dictionary:binary_dictionaries
+bazel build //plugins/jieba:jieba_merged_dict
 
 BAZEL_BIN="$(bazel info bazel-bin)"
 
@@ -71,11 +72,18 @@ install -m 644 "${ROOT}/../plugins/jieba/data/config"/*.json "${CONFIG_DST}/"
 
 JIEBA_DST="${ROOT}/data/jieba_dict"
 JIEBA_SRC="${ROOT}/../plugins/jieba/deps/cppjieba/dict"
+JIEBA_MERGED_SRC="${BAZEL_BIN}/plugins/jieba/jieba_dict/jieba_merged.ocd2"
 mkdir -p "${JIEBA_DST}"
 chmod -R u+w "${JIEBA_DST}"
-rm -f "${JIEBA_DST}"/*.utf8
+rm -f "${JIEBA_DST}"/*.utf8 "${JIEBA_DST}/jieba_merged.ocd2"
 echo "Copying Jieba resources from ${JIEBA_SRC} -> ${JIEBA_DST}"
 install -m 644 "${JIEBA_SRC}"/*.utf8 "${JIEBA_DST}/"
+if [[ -f "${JIEBA_MERGED_SRC}" ]]; then
+  echo "Copying merged Jieba dictionary from ${JIEBA_MERGED_SRC} -> ${JIEBA_DST}"
+  install -m 644 "${JIEBA_MERGED_SRC}" "${JIEBA_DST}/jieba_merged.ocd2"
+else
+  echo "Warning: missing merged Jieba dictionary ${JIEBA_MERGED_SRC}" >&2
+fi
 
 CASE_SRC="${ROOT}/../test/testcases/testcases.json"
 CASE_DST="${ROOT}/test/testcases.json"
