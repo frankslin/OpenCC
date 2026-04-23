@@ -402,6 +402,12 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 
 ## 📜 Changelog
 
+### 0.8.1 - 2026-04-22
+
+- Fixed the publish pipeline so `npm run build` / `prepack` refresh bundled assets before generating `dist`
+- Ensured `jieba_merged.ocd2` is included in published packages
+- Added usage notes for `t2cngov_jieba` and `t2cngov_keep_simp_jieba`
+
 ### 0.8.0 - 2026-04-22
 
 - Added `converter.inspect(text)` to the WASM API, returning segmentation, per-stage conversion output, and the final output as structured JSON
