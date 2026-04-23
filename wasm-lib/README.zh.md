@@ -402,6 +402,12 @@ A：首次載入需要下載設定檔和字典檔（約 1-2MB）。後續轉換�
 
 ## 📜 變更歷史
 
+### 0.8.1 - 2026-04-22
+
+- 修正發布流程，讓 `npm run build` / `prepack` 會先刷新資源，再產生 `dist`
+- 確保已發布套件會包含 `jieba_merged.ocd2`
+- 補上 `t2cngov_jieba` 與 `t2cngov_keep_simp_jieba` 的使用說明
+
 ### 0.8.0 - 2026-04-22
 
 - 在 WASM API 中新增 `converter.inspect(text)`，可回傳分詞結果、每個階段的轉換輸出，以及最終輸出的結構化 JSON
