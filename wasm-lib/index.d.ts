@@ -30,7 +30,22 @@ export interface ConverterOptions {
 /**
  * Async converter function that transforms text
  */
-export type ConverterFunction = (text: string) => Promise<string>;
+export interface InspectionStage {
+  index: number;
+  segments: string[];
+}
+
+export interface InspectionResult {
+  input: string;
+  segments: string[];
+  stages: InspectionStage[];
+  output: string;
+}
+
+export interface ConverterFunction {
+  (text: string): Promise<string>;
+  inspect(text: string): Promise<InspectionResult>;
+}
 
 /**
  * Synchronous custom converter function (for custom dictionaries)

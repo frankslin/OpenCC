@@ -73,6 +73,16 @@ const converter = OpenCC.Converter({ config: "s2twp" });
 const result = await converter("服务器软件");  // 伺服器軟體
 ```
 
+`Converter()` 也提供 inspect 輔助方法：
+
+```javascript
+const converter = OpenCC.Converter({ config: "s2twp" });
+const inspected = await converter.inspect("勇敢的士兵");
+console.log(inspected.segments); // 分詞結果
+console.log(inspected.stages);   // 每一階段的轉換結果
+console.log(inspected.output);   // 最終輸出
+```
+
 **支援的設定檔：**
 
 | 設定檔 | 說明 | 範例 |

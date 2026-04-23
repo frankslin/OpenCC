@@ -38,3 +38,34 @@ cases.forEach((tc, idx) => {
     });
   });
 });
+
+test("[inspect] output matches normal conversion for s2twp", async () => {
+  const convert = getConverter("s2twp.json");
+  const inspected = await convert.inspect(
+    "他只看了几行日志，就一叶知秋，猜到整个系统是数据库连接池出了问题"
+  );
+
+  assert.equal(typeof inspected.input, "string");
+  assert.ok(Array.isArray(inspected.segments));
+  assert.ok(Array.isArray(inspected.stages));
+  assert.equal(
+    inspected.output,
+    await convert("他只看了几行日志，就一叶知秋，猜到整个系统是数据库连接池出了问题")
+  );
+});
+
+test("[inspect] jieba config exposes segmentation result", async () => {
+  const convert = getConverter("s2twp_jieba.json");
+  const inspected = await convert.inspect("勇敢的士兵");
+
+  assert.deepEqual(inspected.segments, ["勇敢", "的", "士兵"]);
+  assert.equal(inspected.output, "勇敢的士兵");
+});
+
+test("[inspect] config shorthand without .json stays supported", async () => {
+  const convert = OpenCC.Converter({ config: "s2twp" });
+  const inspected = await convert.inspect("一叶知秋");
+
+  assert.equal(await convert("一叶知秋"), "一葉知秋");
+  assert.equal(inspected.output, "一葉知秋");
+});
