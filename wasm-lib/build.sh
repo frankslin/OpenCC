@@ -86,7 +86,7 @@ COMMON_FLAGS=(
   -s FORCE_FILESYSTEM=1
   -s ALLOW_MEMORY_GROWTH=1
   -s EXPORT_NAME="createOpenCCWasm"
-  -s EXPORTED_FUNCTIONS="['_opencc_create','_opencc_convert','_opencc_destroy']"
+  -s EXPORTED_FUNCTIONS="['_opencc_create','_opencc_convert','_opencc_inspect','_opencc_destroy']"
   -s EXPORTED_RUNTIME_METHODS="['cwrap','FS','ccall']"
 )
 
