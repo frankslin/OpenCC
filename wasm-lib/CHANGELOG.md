@@ -5,6 +5,13 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-04-22
+
+- **Inspect API**: Added `converter.inspect(text)` to the WASM wrapper, returning segmentation, per-stage outputs, and final converted text as structured JSON.
+- **WASM export**: Exposed `opencc_inspect` from the Emscripten module and switched the internal handle implementation to `SimpleConverter`.
+- **Type definitions**: Added `InspectionResult` / `InspectionStage` typings and documented the new API in both README files.
+- **Validation**: Regenerated publishable `dist/` artifacts, added inspect regression tests, and verified `npm test` plus `npm pack --dry-run`.
+
 ## [0.7.0] - 2026-04-13
 
 - **Upstream plugin alignment**: Rebases the wasm branch onto upstream `master` and switches Jieba support to reuse the upstream segmentation plugin implementation.
