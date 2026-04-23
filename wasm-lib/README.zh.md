@@ -83,6 +83,16 @@ console.log(inspected.stages);   // 每一階段的轉換結果
 console.log(inspected.output);   // 最終輸出
 ```
 
+同樣的 API 也可直接用在大陸政府標準繁體的 Jieba 設定：
+
+```javascript
+const converter = OpenCC.Converter({ config: "t2cngov_jieba" });
+console.log(await converter("測試简体混繁體")); // 測試簡體混繁體
+
+const keepSimp = OpenCC.Converter({ config: "t2cngov_keep_simp_jieba" });
+console.log(await keepSimp("測試简体混繁體")); // 測試简体混繁體
+```
+
 **支援的設定檔：**
 
 | 設定檔 | 說明 | 範例 |
@@ -103,6 +113,8 @@ console.log(inspected.output);   // 最終輸出
 | `t2jp` | 日文舊字體 → 日文新字體 | 櫻花 → 桜花 |
 | `t2cngov` | 繁體 → 大陸政府標準繁體 | 潮溼 → 潮湿 |
 | `t2cngov_keep_simp` | 繁體 → 大陸政府標準繁體（保留簡體） | 简体繁體 → 简体繁體 |
+| `t2cngov_jieba` | 繁體 → 大陸政府標準繁體（Jieba 分詞） | 測試简体混繁體 → 測試簡體混繁體 |
+| `t2cngov_keep_simp_jieba` | 繁體 → 大陸政府標準繁體（保留簡體，Jieba 分詞） | 測試简体混繁體 → 測試简体混繁體 |
 
 #### 方式 2：使用 `from`/`to` 參數（与 `opencc-js` 相容）
 
