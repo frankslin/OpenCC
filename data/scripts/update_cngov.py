@@ -67,6 +67,8 @@ def rewrite_dict_refs(node):
             out["type"] = "ocd2"
         if isinstance(out.get("file"), str) and out["file"].endswith(".txt"):
             out["file"] = "cngov/" + out["file"][:-4] + ".ocd2"
+        if out.get("user_dict_path") == "jieba_dict/user.dict.traditional.utf8":
+            out["user_dict_path"] = "jieba_dict/user.dict.utf8"
         return out
     if isinstance(node, list):
         return [rewrite_dict_refs(item) for item in node]
