@@ -22,7 +22,9 @@ TEXT_FILES = [
 CONFIG_MAP = {
     "s2t.json": "s2t_cngov.json",
     "t2gov.json": "t2cngov.json",
+    "t2gov_jieba.json": "t2cngov_jieba.json",
     "t2gov_keep_simp.json": "t2cngov_keep_simp.json",
+    "t2gov_keep_simp_jieba.json": "t2cngov_keep_simp_jieba.json",
     "t2s.json": "t2s_cngov.json",
 }
 
