@@ -83,6 +83,16 @@ console.log(inspected.stages);   // Per-stage conversion output
 console.log(inspected.output);   // Final converted output
 ```
 
+The same API also works with the CN Government Standard Jieba configs:
+
+```javascript
+const converter = OpenCC.Converter({ config: "t2cngov_jieba" });
+console.log(await converter("測試简体混繁體")); // 測試簡體混繁體
+
+const keepSimp = OpenCC.Converter({ config: "t2cngov_keep_simp_jieba" });
+console.log(await keepSimp("測試简体混繁體")); // 測試简体混繁體
+```
+
 **Supported configs:**
 
 | Config | Description | Example |
@@ -103,6 +113,8 @@ console.log(inspected.output);   // Final converted output
 | `t2jp` | Traditional → Japanese Shinjitai | 櫻花 → 桜花 |
 | `t2cngov` | Traditional → CN Gov Standard | 潮溼 → 潮湿 |
 | `t2cngov_keep_simp` | Traditional → CN Gov (Keep Simp) | 简体繁體 → 简体繁體 |
+| `t2cngov_jieba` | Traditional → CN Gov Standard (Jieba segmentation) | 測試简体混繁體 → 測試簡體混繁體 |
+| `t2cngov_keep_simp_jieba` | Traditional → CN Gov (Keep Simp, Jieba segmentation) | 測試简体混繁體 → 測試简体混繁體 |
 
 #### Method 2: Using `from`/`to` parameters (compatible with `opencc-js`)
 
