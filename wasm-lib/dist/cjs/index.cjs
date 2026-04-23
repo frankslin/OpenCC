@@ -38,6 +38,7 @@ async function getApi() {
     api = {
       create: mod.cwrap("opencc_create", "number", ["string"]),
       convert: mod.cwrap("opencc_convert", "string", ["number", "string"]),
+      inspect: mod.cwrap("opencc_inspect", "string", ["number", "string"]),
       destroy: mod.cwrap("opencc_destroy", null, ["number"]),
     };
   }
@@ -146,12 +147,47 @@ function resolveConfig(from, to) {
 }
 
 function createConverter({ from, to, config }) {
-  const configName = config || resolveConfig(from, to);
+  let configName;
+
+  if (config) {
+    configName = config.endsWith(".json") ? config : `${config}.json`;
+  } else if (from && to) {
+    configName = resolveConfig(from, to);
+  } else {
+    throw new Error('Either "config" or both "from" and "to" must be specified');
+  }
+
   return async (text) => {
     if (configName === null) return text;
     const handle = await ensureConfig(configName);
     const { api: apiFns } = await getApi();
     return apiFns.convert(handle, text);
+  };
+}
+
+function createInspector({ from, to, config }) {
+  let configName;
+
+  if (config) {
+    configName = config.endsWith(".json") ? config : `${config}.json`;
+  } else if (from && to) {
+    configName = resolveConfig(from, to);
+  } else {
+    throw new Error('Either "config" or both "from" and "to" must be specified');
+  }
+
+  return async (text) => {
+    if (configName === null) {
+      return {
+        input: text,
+        segments: text.length === 0 ? [] : [text],
+        stages: [],
+        output: text,
+      };
+    }
+    const handle = await ensureConfig(configName);
+    const { api: apiFns } = await getApi();
+    return JSON.parse(apiFns.inspect(handle, text));
   };
 }
 
@@ -193,7 +229,10 @@ function ConverterFactory(fromLocale, toLocale, extraDicts = []) {
 const OpenCC = {
   Converter(opts) {
     const fn = createConverter(opts);
-    return (text) => fn(text);
+    const inspect = createInspector(opts);
+    const converter = (text) => fn(text);
+    converter.inspect = (text) => inspect(text);
+    return converter;
   },
   CustomConverter,
   ConverterFactory,
