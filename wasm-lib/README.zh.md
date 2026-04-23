@@ -402,6 +402,12 @@ A：首次載入需要下載設定檔和字典檔（約 1-2MB）。後續轉換�
 
 ## 📜 變更歷史
 
+### 0.8.0 - 2026-04-22
+
+- 在 WASM API 中新增 `converter.inspect(text)`，可回傳分詞結果、每個階段的轉換輸出，以及最終輸出的結構化 JSON
+- 從 Emscripten 模組匯出新的 inspect 入口，並重新產生可發布的 `dist/` 產物
+- 補上 inspect 流程的型別、測試與文件
+
 ### 0.7.0 - 2026-04-13
 
 - 將 wasm 分支重新 rebase 到 upstream `master`

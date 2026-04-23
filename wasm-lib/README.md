@@ -402,6 +402,12 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 
 ## 📜 Changelog
 
+### 0.8.0 - 2026-04-22
+
+- Added `converter.inspect(text)` to the WASM API, returning segmentation, per-stage conversion output, and the final output as structured JSON
+- Exposed the new inspect entry point from the Emscripten module and regenerated publishable `dist/` artifacts
+- Added typings, tests, and documentation for the inspect workflow
+
 ### 0.7.0 - 2026-04-13
 
 - Rebased the wasm branch onto upstream `master`
