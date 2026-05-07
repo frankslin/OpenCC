@@ -80,6 +80,44 @@ def test_custom_config_resolves_local_dictionaries():
     assert converter.convert('远') == '遠'
 
 
+def test_custom_config_resolves_absolute_ocd2_path_to_text_dictionary(tmp_path):
+    import opencc
+
+    dict_txt = tmp_path / 'CustomPhrases.txt'
+    dict_txt.write_text('测试\t測試\n', encoding='utf-8')
+    config_path = tmp_path / 'custom.json'
+    config_path.write_text(json.dumps({
+        'name': 'Custom',
+        'segmentation': {
+            'type': 'mmseg',
+            'dict': {
+                'type': 'ocd2',
+                'file': str(tmp_path / 'CustomPhrases.ocd2'),
+            },
+        },
+        'conversion_chain': [{
+            'dict': {
+                'type': 'ocd2',
+                'file': str(tmp_path / 'CustomPhrases.ocd2'),
+            },
+        }],
+    }), encoding='utf-8')
+
+    converter = opencc.OpenCC(str(config_path))
+
+    assert converter.convert('测试') == '測試'
+
+
+def test_dictionary_parser_strips_utf8_bom(tmp_path):
+    from opencc import _opencc_pure
+
+    dict_txt = tmp_path / 'BomPhrases.txt'
+    dict_txt.write_text('\ufeff测试\t測試\n', encoding='utf-8')
+    trie = _opencc_pure._load_trie(str(dict_txt), reverse=False)
+
+    assert trie.prefix_match('测试', 0) == (2, '測試')
+
+
 def test_conversion():
     import opencc
     import re
