@@ -5,20 +5,7 @@ _this_dir = os.path.dirname(os.path.abspath(__file__))
 _opencc_share_dir = os.path.join(_this_dir, 'clib', 'share', 'opencc')
 _opencc_rootdir = os.path.abspath(os.path.join(_this_dir, '..', '..'))
 _opencc_configdir = os.path.join(_opencc_rootdir, 'data', 'config')
-_pure_config_dir = os.path.join(_this_dir, 'config')
 _use_pure_mode = os.environ.get('OPENCC_PURE_PYTHON', '').lower() in ('1', 'true', 'yes')
-_pure_default_configs = [
-    'hk2s.json',
-    's2hk.json',
-    's2t.json',
-    's2tw.json',
-    's2twp.json',
-    't2hk.json',
-    't2s.json',
-    't2tw.json',
-    'tw2s.json',
-    'tw2sp.json',
-]
 
 __all__ = ['CONFIGS', 'OpenCC', '__version__']
 
@@ -35,25 +22,17 @@ if not _use_pure_mode:
 if opencc_clib is not None:
     __version__ = opencc_clib.__version__
 else:
+    from opencc._opencc_pure import OpenCC as _PureOpenCC
+    from opencc._opencc_pure import list_configs as _list_pure_configs
     try:
-        from opencc.opencc import OpenCC as _PureOpenCC
-    except ImportError as exc:
-        raise ImportError(
-            'Pure Python backend is unavailable. Install optional dependency '
-            '"opencc-python-reimplemented" (or `pip install "opencc[pure]"`) '
-            'or unset OPENCC_PURE_PYTHON.'
-        ) from exc
-    try:
-        __version__ = metadata.version('opencc-python-reimplemented')
+        __version__ = metadata.version('OpenCC')
     except metadata.PackageNotFoundError:
         __version__ = 'dev'
 
 
 def _discover_configs():
     if opencc_clib is None:
-        if not os.path.isdir(_pure_config_dir):
-            return _pure_default_configs
-        return [f for f in os.listdir(_pure_config_dir) if f.endswith('.json')]
+        return _list_pure_configs()
 
     if os.path.isdir(_opencc_share_dir):
         return [f for f in os.listdir(_opencc_share_dir) if f.endswith('.json')]
@@ -85,9 +64,8 @@ else:
     class OpenCC:
 
         def __init__(self, config: str = 't2s') -> None:
-            base_config = config.removesuffix('.json')
-            self._converter = _PureOpenCC(base_config)
+            self._impl = _PureOpenCC(config)
             self.config = config if config.endswith('.json') else f'{config}.json'
 
-        def convert(self, text: str):
-            return self._converter.convert(text)
+        def convert(self, text: str) -> str:
+            return self._impl.convert(text)

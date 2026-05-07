@@ -7,6 +7,7 @@ import warnings
 
 import setuptools
 import setuptools.command.build_ext
+import setuptools.command.build_py
 import wheel.bdist_wheel
 
 _this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -192,6 +193,47 @@ class BDistWheelCommand(wheel.bdist_wheel.bdist_wheel, object):
         self.plat_name = self._determine_platform_tag()
 
 
+class BuildPyCommand(setuptools.command.build_py.build_py, object):
+    """
+    Extends the standard build_py step to bundle OpenCC's plain-text
+    dictionaries and JSON config files into the installed package.
+
+    The bundled files enable the pure-Python backend to work without
+    access to the source tree (e.g. after ``pip install opencc``).
+    """
+
+    def run(self):
+        super(BuildPyCommand, self).run()
+        self._copy_opencc_data()
+
+    def _copy_opencc_data(self):
+        src_config = os.path.join(_this_dir, 'data', 'config')
+        src_dict = os.path.join(_this_dir, 'data', 'dictionary')
+        dst_base = os.path.join(self.build_lib, 'opencc')
+        dst_config = os.path.join(dst_base, 'config')
+        dst_dict = os.path.join(dst_base, 'dictionary')
+
+        # Copy JSON config files.
+        os.makedirs(dst_config, exist_ok=True)
+        for fname in os.listdir(src_config):
+            if fname.endswith('.json'):
+                shutil.copy2(
+                    os.path.join(src_config, fname),
+                    os.path.join(dst_config, fname),
+                )
+
+        # Copy txt dictionary files (preserving sub-directory structure).
+        self._copy_txt_tree(src_dict, dst_dict)
+
+    def _copy_txt_tree(self, src, dst):
+        os.makedirs(dst, exist_ok=True)
+        for entry in os.scandir(src):
+            if entry.is_dir():
+                self._copy_txt_tree(entry.path, os.path.join(dst, entry.name))
+            elif entry.name.endswith('.txt'):
+                shutil.copy2(entry.path, os.path.join(dst, entry.name))
+
+
 packages = ['opencc', 'opencc.clib']
 
 version_info = get_version_info()
@@ -216,12 +258,10 @@ setuptools.setup(
     ext_modules=[OpenCCExtension('opencc.clib.opencc_clib', 'python')],
     cmdclass={
         'build_ext': BuildExtCommand,
+        'build_py': BuildPyCommand,
         'bdist_wheel': BDistWheelCommand,
     },
     setup_requires=setup_requires,
-    extras_require={
-        'pure': ['opencc-python-reimplemented>=0.1.7'],
-    },
 
     classifiers=[
         'Development Status :: 5 - Production/Stable',
