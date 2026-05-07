@@ -5,16 +5,32 @@ _this_dir = os.path.dirname(os.path.abspath(__file__))
 _opencc_share_dir = os.path.join(_this_dir, 'clib', 'share', 'opencc')
 _opencc_rootdir = os.path.abspath(os.path.join(_this_dir, '..', '..'))
 _opencc_configdir = os.path.join(_opencc_rootdir, 'data', 'config')
-_pure_mode_enabled = os.environ.get('OPENCC_PURE_PYTHON', '').lower() in ('1', 'true', 'yes')
+_pure_config_dir = os.path.join(_this_dir, 'config')
+_use_pure_mode = os.environ.get('OPENCC_PURE_PYTHON', '').lower() in ('1', 'true', 'yes')
+_pure_default_configs = [
+    'hk2s.json',
+    's2hk.json',
+    's2t.json',
+    's2tw.json',
+    's2twp.json',
+    't2hk.json',
+    't2s.json',
+    't2tw.json',
+    'tw2s.json',
+    'tw2sp.json',
+]
 
 __all__ = ['CONFIGS', 'OpenCC', '__version__']
 
 opencc_clib = None
-if not _pure_mode_enabled:
+if not _use_pure_mode:
     try:
         import opencc_clib
     except ImportError:
-        from opencc.clib import opencc_clib
+        try:
+            from opencc.clib import opencc_clib
+        except ImportError:
+            opencc_clib = None
 
 if opencc_clib is not None:
     __version__ = opencc_clib.__version__
@@ -24,22 +40,29 @@ else:
     except ImportError as exc:
         raise ImportError(
             'Pure Python backend is unavailable. Install optional dependency '
-            '"opencc-python-reimplemented" or unset OPENCC_PURE_PYTHON.'
+            '"opencc-python-reimplemented" (or `pip install "opencc[pure]"`) '
+            'or unset OPENCC_PURE_PYTHON.'
         ) from exc
     try:
         __version__ = metadata.version('opencc-python-reimplemented')
     except metadata.PackageNotFoundError:
         __version__ = 'dev'
 
-if opencc_clib is None and os.path.isdir(os.path.join(_this_dir, 'config')):
-    _pure_config_dir = os.path.join(_this_dir, 'config')
-    CONFIGS = [f for f in os.listdir(_pure_config_dir) if f.endswith('.json')]
-elif os.path.isdir(_opencc_share_dir):
-    CONFIGS = [f for f in os.listdir(_opencc_share_dir) if f.endswith('.json')]
-elif os.path.isdir(_opencc_configdir):
-    CONFIGS = [f for f in os.listdir(_opencc_configdir) if f.endswith('.json')]
-else:
-    CONFIGS = []
+
+def _discover_configs():
+    if opencc_clib is None:
+        if not os.path.isdir(_pure_config_dir):
+            return _pure_default_configs
+        return [f for f in os.listdir(_pure_config_dir) if f.endswith('.json')]
+
+    if os.path.isdir(_opencc_share_dir):
+        return [f for f in os.listdir(_opencc_share_dir) if f.endswith('.json')]
+    if os.path.isdir(_opencc_configdir):
+        return [f for f in os.listdir(_opencc_configdir) if f.endswith('.json')]
+    return []
+
+
+CONFIGS = _discover_configs()
 
 
 if opencc_clib is not None:
@@ -62,8 +85,8 @@ else:
     class OpenCC:
 
         def __init__(self, config: str = 't2s') -> None:
-            normalized = config[:-5] if config.endswith('.json') else config
-            self._converter = _PureOpenCC(normalized)
+            base_config = config.removesuffix('.json')
+            self._converter = _PureOpenCC(base_config)
             self.config = config if config.endswith('.json') else f'{config}.json'
 
         def convert(self, text: str):
