@@ -108,6 +108,10 @@ See [demo.js](https://github.com/BYVoid/OpenCC/blob/master/node/demo.js) and [ts
 
 `pip install opencc` (Windows, Linux, macOS)
 
+If you want to force a pure Python backend (no native extension import), set
+`OPENCC_PURE_PYTHON=1` and install the optional dependency:
+`pip install "opencc[pure]"`.
+
 ```python
 import opencc
 converter = opencc.OpenCC('s2t.json')
