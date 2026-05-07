@@ -6,6 +6,7 @@ _opencc_share_dir = os.path.join(_this_dir, 'clib', 'share', 'opencc')
 _opencc_rootdir = os.path.abspath(os.path.join(_this_dir, '..', '..'))
 _opencc_configdir = os.path.join(_opencc_rootdir, 'data', 'config')
 _use_pure_mode = os.environ.get('OPENCC_PURE_PYTHON', '').lower() in ('1', 'true', 'yes')
+# Set OPENCC_PURE_PYTHON=1 (or 'true' / 'yes') to force the pure-Python backend.
 
 __all__ = ['CONFIGS', 'OpenCC', '__version__']
 

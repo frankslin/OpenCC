@@ -49,6 +49,9 @@ _pkg_config_dir = os.path.join(_this_dir, 'config')
 _pkg_dict_dir = os.path.join(_this_dir, 'dictionary')
 
 
+_MAX_PARENT_TRAVERSAL_DEPTH = 8
+
+
 def _find_repo_root() -> str:
     """
     Walk up the directory tree to find the OpenCC repo root.
@@ -59,7 +62,7 @@ def _find_repo_root() -> str:
     without bundled data files).
     """
     candidate = _this_dir
-    for _ in range(8):
+    for _ in range(_MAX_PARENT_TRAVERSAL_DEPTH):
         if (os.path.isdir(os.path.join(candidate, 'data', 'config')) and
                 os.path.isdir(os.path.join(candidate, 'data', 'dictionary'))):
             return candidate
@@ -209,6 +212,24 @@ def _find_dict_txt(filename: str):
     raise FileNotFoundError(f'Dictionary file not found for: {filename!r}')
 
 
+def _parse_dict_lines(path: str):
+    """
+    Yield ``(key, candidates)`` tuples for every data line in a txt dict file.
+
+    Comment lines (starting with ``#``) and blank lines are skipped.
+    ``candidates`` is a list of one or more whitespace-separated values.
+    """
+    with open(path, encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '\t' not in line:
+                continue
+            key, rest = line.split('\t', 1)
+            candidates = rest.split()
+            if candidates:
+                yield key, candidates
+
+
 def _load_trie(path: str, reverse: bool) -> _Trie:
     """
     Load a ``key<TAB>value1 value2 ...`` txt file into a :class:`_Trie`.
@@ -227,27 +248,15 @@ def _load_trie(path: str, reverse: bool) -> _Trie:
     trie = _Trie()
 
     if not reverse:
-        with open(path, encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith('#') or '\t' not in line:
-                    continue
-                key, rest = line.split('\t', 1)
-                candidates = rest.split()
-                if candidates:
-                    trie.add(key, candidates[0])
+        for key, candidates in _parse_dict_lines(path):
+            trie.add(key, candidates[0])
     else:
         # Reverse: each candidate value -> original key (first writer wins).
         reversed_mapping: dict = {}
-        with open(path, encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith('#') or '\t' not in line:
-                    continue
-                key, rest = line.split('\t', 1)
-                for candidate in rest.split():
-                    if candidate not in reversed_mapping:
-                        reversed_mapping[candidate] = key
+        for key, candidates in _parse_dict_lines(path):
+            for candidate in candidates:
+                if candidate not in reversed_mapping:
+                    reversed_mapping[candidate] = key
         for new_key, new_value in reversed_mapping.items():
             trie.add(new_key, new_value)
 

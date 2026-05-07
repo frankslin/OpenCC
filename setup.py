@@ -223,15 +223,12 @@ class BuildPyCommand(setuptools.command.build_py.build_py, object):
                 )
 
         # Copy txt dictionary files (preserving sub-directory structure).
-        self._copy_txt_tree(src_dict, dst_dict)
-
-    def _copy_txt_tree(self, src, dst):
-        os.makedirs(dst, exist_ok=True)
-        for entry in os.scandir(src):
-            if entry.is_dir():
-                self._copy_txt_tree(entry.path, os.path.join(dst, entry.name))
-            elif entry.name.endswith('.txt'):
-                shutil.copy2(entry.path, os.path.join(dst, entry.name))
+        shutil.copytree(
+            src_dict,
+            dst_dict,
+            ignore=shutil.ignore_patterns('*.ocd', '*.ocd2', '*.py'),
+            dirs_exist_ok=True,
+        )
 
 
 packages = ['opencc', 'opencc.clib']
