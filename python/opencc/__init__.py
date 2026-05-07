@@ -1,49 +1,50 @@
 import os
+from importlib import metadata
 
-try:
-    import opencc_clib
-except ImportError:
-    from opencc.clib import opencc_clib
+from .opencc import OpenCC as _PureOpenCC
 
 __all__ = ['CONFIGS', 'OpenCC', '__version__']
 
-__version__ = opencc_clib.__version__
 _this_dir = os.path.dirname(os.path.abspath(__file__))
-_opencc_share_dir = os.path.join(_this_dir, 'clib', 'share', 'opencc')
-_opencc_rootdir = os.path.abspath(os.path.join(_this_dir, '..', '..'))
-_opencc_configdir = os.path.join(_opencc_rootdir, 'data', 'config')
+_opencc_config_dir = os.path.join(_this_dir, 'config')
 
-if os.path.isdir(_opencc_share_dir):
-    CONFIGS = [f for f in os.listdir(_opencc_share_dir) if f.endswith('.json')]
-elif os.path.isdir(_opencc_configdir):
-    CONFIGS = [f for f in os.listdir(_opencc_configdir) if f.endswith('.json')]
+if os.path.isdir(_opencc_config_dir):
+    CONFIGS = sorted(f for f in os.listdir(_opencc_config_dir) if f.endswith('.json'))
 else:
     CONFIGS = []
 
 
-def _append_path_to_env(name: str, path: str) -> None:
-    value = os.environ.get(name, '')
-    if path in value:  # Path already exists
-        return
-    if value == '':
-        value = path
-    else:
-        value += f':{path}'
-    os.environ[name] = value
+def _detect_version() -> str:
+    for package_name in ('OpenCC', 'opencc-python-reimplemented'):
+        try:
+            return metadata.version(package_name)
+        except metadata.PackageNotFoundError:
+            continue
+    return 'dev'
 
 
-class OpenCC(opencc_clib._OpenCC):
+def _normalize_config(config: str) -> str:
+    normalized = config
+    if normalized.endswith('.json'):
+        normalized = normalized[:-5]
+    if os.path.isfile(config):
+        base_name = os.path.basename(config)
+        if base_name.endswith('.json'):
+            normalized = base_name[:-5]
+        else:
+            normalized = base_name
+    return normalized
+
+
+__version__ = _detect_version()
+
+
+class OpenCC:
 
     def __init__(self, config: str = 't2s') -> None:
-        if not config.endswith('.json'):
-            config += '.json'
-        if not os.path.isfile(config):
-            config_under_share_dir = os.path.join(_opencc_share_dir, config)
-            if os.path.isfile(config_under_share_dir):
-                config = config_under_share_dir
-        super().__init__(config)
-        self.config = config
+        self.config = config if config.endswith('.json') else f'{config}.json'
+        normalized_config = _normalize_config(config)
+        self._converter = _PureOpenCC(normalized_config)
 
-    def convert(self, text: str):
-        byte_text = text.encode('utf-8')
-        return super().convert(byte_text, len(byte_text))
+    def convert(self, text: str) -> str:
+        return self._converter.convert(text)
