@@ -26,6 +26,7 @@ OPENCC_SRCS=(
   ${OPENCC_SRC_DIR}/src/MarisaDict.cpp
   ${OPENCC_SRC_DIR}/src/MaxMatchSegmentation.cpp
   ${OPENCC_SRC_DIR}/src/PluginSegmentation.cpp
+  ${OPENCC_SRC_DIR}/src/PrefixMatch.cpp
   ${OPENCC_SRC_DIR}/src/Segmentation.cpp
   ${OPENCC_SRC_DIR}/src/SerializedValues.cpp
   ${OPENCC_SRC_DIR}/src/SimpleConverter.cpp
@@ -86,8 +87,8 @@ COMMON_FLAGS=(
   -s FORCE_FILESYSTEM=1
   -s ALLOW_MEMORY_GROWTH=1
   -s EXPORT_NAME="createOpenCCWasm"
-  -s EXPORTED_FUNCTIONS="['_opencc_create','_opencc_convert','_opencc_inspect','_opencc_destroy']"
-  -s EXPORTED_RUNTIME_METHODS="['cwrap','FS','ccall']"
+  -s EXPORTED_FUNCTIONS="['_opencc_create','_opencc_convert','_opencc_inspect','_opencc_destroy','_malloc','_free']"
+  -s EXPORTED_RUNTIME_METHODS="['cwrap','FS','ccall','lengthBytesUTF8','stringToUTF8','UTF8ToString']"
 )
 
 # ES module（适合浏览器 / 现代 bundler）
