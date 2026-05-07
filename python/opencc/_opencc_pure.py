@@ -78,7 +78,7 @@ _repo_config_dir = os.path.join(_repo_root, 'data', 'config') if _repo_root else
 _repo_dict_dir = os.path.join(_repo_root, 'data', 'dictionary') if _repo_root else ''
 
 
-# ── Trie ──────────────────────────────────────────────────────────────────────
+# Trie
 
 class _TrieNode:
     """Single node in the character trie."""
@@ -137,7 +137,7 @@ class _Trie:
         return matched_len, matched_value
 
 
-# ── DictGroup ─────────────────────────────────────────────────────────────────
+# DictGroup
 
 class _GroupMatcher:
     """
@@ -166,7 +166,7 @@ class _GroupMatcher:
         return 0, None
 
 
-# ── Dictionary loading ────────────────────────────────────────────────────────
+# Dictionary loading
 
 _trie_cache: dict = {}  # (absolute_path, reversed: bool) -> _Trie
 
@@ -270,7 +270,7 @@ def _get_trie(filename: str) -> _Trie:
     return _load_trie(path, needs_reverse)
 
 
-# ── Config parsing ────────────────────────────────────────────────────────────
+# Config parsing
 
 def _parse_dict_node(d: dict) -> _GroupMatcher:
     """
@@ -297,7 +297,7 @@ def _parse_dict_node(d: dict) -> _GroupMatcher:
     raise ValueError(f'Unknown dict type: {dtype!r}')
 
 
-# ── Core conversion routines ──────────────────────────────────────────────────
+# Core conversion routines
 
 def _convert_phrase(text: str, matcher: _GroupMatcher) -> str:
     """
@@ -353,7 +353,7 @@ def _segment(text: str, matcher: _GroupMatcher) -> list:
     return segments
 
 
-# ── Config location helpers ───────────────────────────────────────────────────
+# Config location helpers
 
 def _find_config(config_name: str) -> str:
     """
@@ -402,7 +402,7 @@ def list_configs() -> list:
     return sorted(configs)
 
 
-# ── Public API ────────────────────────────────────────────────────────────────
+# Public API
 
 class OpenCC:
     """
@@ -419,17 +419,18 @@ class OpenCC:
     """
 
     def __init__(self, config: str = 't2s') -> None:
-        # Accept both 's2t' and 's2t.json'.
-        config_name = config.removesuffix('.json')
+        config_name = config[:-5] if config.endswith('.json') else config
 
-        # Allow absolute paths for custom configs.
-        if os.path.isabs(config) and os.path.isfile(config):
+        # Allow custom config paths, matching the previous Python wrapper.
+        if os.path.isfile(config):
             config_path = config
         else:
             config_path = _find_config(config_name)
 
         with open(config_path, encoding='utf-8') as f:
             cfg = json.load(f)
+
+        self.config = config if config.endswith('.json') else f'{config}.json'
 
         seg_type = cfg.get('segmentation', {}).get('type', '')
         if seg_type != 'mmseg':

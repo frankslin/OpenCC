@@ -108,9 +108,9 @@ See [demo.js](https://github.com/BYVoid/OpenCC/blob/master/node/demo.js) and [ts
 
 `pip install opencc` (Windows, Linux, macOS)
 
-If you want to force a pure Python backend (no native extension import), set
-`OPENCC_PURE_PYTHON=1` and install the optional dependency:
-`pip install "opencc[pure]"`.
+The Python package uses the pure Python implementation and supports the built-in
+mmseg-based configs. Jieba plugin configs are not supported by the Python
+package.
 
 ```python
 import opencc
