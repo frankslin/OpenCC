@@ -67,6 +67,9 @@
       "input": "这个软件的用户体验很好",
       "expected_segmentation": "这个/软件/的/用户/体验/很/好",
       "expected": {
+        "s2t_jieba": "這個軟件的用戶體驗很好",
+        "s2tw_jieba": "這個軟件的用戶體驗很好",
+        "s2hk_jieba": "這個軟件的用户體驗很好",
         "s2twp": "這個軟體的使用者體驗很好",
         "s2twp_jieba": "這個軟體的使用者體驗很好"
       }
@@ -159,6 +162,16 @@
       "expected": {
         "s2twp": "城堡計程車兵已經出發",
         "s2twp_jieba": "城堡的士兵已經出發"
+      }
+    },
+    {
+      "id": "jieba_s2t_011",
+      "description": "一百/年历 is incorrect mmseg result; sourced from https://ayaka.shn.hk/s2tfont/hant/",
+      "input": "拥有一百年历史",
+      "expected_segmentation": "拥有/一百年/历史",
+      "expected": {
+        "s2twp": "擁有一百年曆史",
+        "s2twp_jieba": "擁有一百年歷史"
       }
     }
   ]
