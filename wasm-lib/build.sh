@@ -27,7 +27,9 @@ OPENCC_SRCS=(
   ${OPENCC_SRC_DIR}/src/MaxMatchSegmentation.cpp
   ${OPENCC_SRC_DIR}/src/PluginSegmentation.cpp
   ${OPENCC_SRC_DIR}/src/PrefixMatch.cpp
+  ${OPENCC_SRC_DIR}/src/ResourceProvider.cpp
   ${OPENCC_SRC_DIR}/src/Segmentation.cpp
+  ${OPENCC_SRC_DIR}/src/SerializableDict.cpp
   ${OPENCC_SRC_DIR}/src/SerializedValues.cpp
   ${OPENCC_SRC_DIR}/src/SimpleConverter.cpp
   ${OPENCC_SRC_DIR}/src/TextDict.cpp

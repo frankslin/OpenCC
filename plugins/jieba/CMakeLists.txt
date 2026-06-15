@@ -289,6 +289,8 @@ if (BUILD_OPENCC_JIEBA_PLUGIN AND OPENCC_ENABLE_INSTALL)
       ${CMAKE_CURRENT_SOURCE_DIR}/data/config/s2t_jieba.json
       ${CMAKE_CURRENT_SOURCE_DIR}/data/config/s2tw_jieba.json
       ${CMAKE_CURRENT_SOURCE_DIR}/data/config/s2twp_jieba.json
+      ${CMAKE_CURRENT_SOURCE_DIR}/data/config/t2cngov_jieba.json
+      ${CMAKE_CURRENT_SOURCE_DIR}/data/config/t2cngov_keep_simp_jieba.json
       ${CMAKE_CURRENT_SOURCE_DIR}/data/config/tw2sp_jieba.json
     DESTINATION
       ${DIR_SHARE_OPENCC}

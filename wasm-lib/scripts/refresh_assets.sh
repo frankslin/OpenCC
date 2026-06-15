@@ -28,8 +28,8 @@ NEEDED_DICTS=()
 while IFS= read -r line; do
   [[ -n "$line" ]] && NEEDED_DICTS+=("$line")
 done <<< "$(
-  grep -h -o '"file"[[:space:]]*:[[:space:]]*"[^"]*\\.ocd2"' data/config/*.json \
-    | sed -E 's/.*"file"[[:space:]]*:[[:space:]]*"([^"]+)".*/\\1/' | sort -u
+  grep -h -E -o '"file"[[:space:]]*:[[:space:]]*"[^"]*\.ocd2"' data/config/*.json \
+    | sed -E 's/.*"file"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' | sort -u
 )"
 
 # If no matches (unexpected), fall back to all .ocd2
