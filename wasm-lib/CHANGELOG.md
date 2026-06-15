@@ -5,6 +5,14 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-15
+
+- **Upstream alignment**: Bundled assets now track OpenCC upstream commit `71964afa6c7f`.
+- **CN Government Standard dictionary sync**: Updated bundled cngov dictionaries to `Transformer(1.3.7)` (`da403c620a17`) and keep generated dictionaries aligned with that upstream source.
+- **New configs**: Added `s2hkp`, `hk2sp`, `s2hkp_jieba`, `hk2sp_jieba`, `s2t_cngov`, and `t2s_cngov` to wasm assets and generated APIs.
+- **Build compatibility**: Updated wasm build inputs for upstream's resource/dictionary implementation split and tightened asset refresh to copy config-referenced `.ocd2` files.
+- **Validation**: Regenerated `dist/` artifacts and verified cngov config validation plus the wasm Node/CDN test suite.
+
 ## [0.8.1] - 2026-04-22
 
 - **Packaging fix**: `npm run build` / `prepack` now refresh bundled assets before generating `dist/`, so `jieba_merged.ocd2` is included in published packages.
@@ -169,6 +177,7 @@ If you were importing the WASM module directly (not the high-level API), no chan
 
 ---
 
+[0.9.0]: https://github.com/frankslin/OpenCC/compare/v0.8.2...v0.9.0
 [0.4.2]: https://github.com/frankslin/OpenCC/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/frankslin/OpenCC/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/frankslin/OpenCC/compare/v0.3.0...v0.4.0

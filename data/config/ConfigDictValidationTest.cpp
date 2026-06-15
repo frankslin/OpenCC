@@ -14,6 +14,7 @@ static_assert(false, "ConfigDictValidationTest is only supported under Bazel");
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "rapidjson/document.h"
@@ -36,6 +37,8 @@ protected:
     runfiles_.reset(Runfiles::CreateForTest());
     ASSERT_NE(nullptr, runfiles_);
     testcasesPath_ = runfiles_->Rlocation("_main/test/testcases/testcases.json");
+    cngovTestcasesPath_ =
+        runfiles_->Rlocation("_main/test/testcases/cngov_testcases.json");
     configName_ = OPENCC_CONFIG_DICT_TEST_FILE;
     const std::string suffix = ".json";
     if (configName_.size() >= suffix.size() &&
@@ -79,6 +82,7 @@ protected:
   std::unique_ptr<Runfiles> runfiles_;
   std::string configName_;
   std::string testcasesPath_;
+  std::string cngovTestcasesPath_;
   std::string configDir_;
   std::string dictDir_;
   std::unordered_map<std::string, std::unique_ptr<SimpleConverter>>
@@ -86,40 +90,43 @@ protected:
 };
 
 TEST_F(ConfigDictValidationTest, ConvertExpectedOutputs) {
-  const std::string json = ReadFile(testcasesPath_);
-  rapidjson::Document doc;
-  doc.Parse<rapidjson::kParseCommentsFlag |
-            rapidjson::kParseTrailingCommasFlag>(json.c_str());
-  ASSERT_FALSE(doc.HasParseError());
-  ASSERT_TRUE(doc.IsObject());
-  ASSERT_TRUE(doc.HasMember("cases"));
-  const auto& cases = doc["cases"];
-  ASSERT_TRUE(cases.IsArray());
-
   size_t checkedCases = 0;
-  for (auto& testcase : cases.GetArray()) {
-    ASSERT_TRUE(testcase.IsObject());
-    ASSERT_TRUE(testcase.HasMember("input"));
-    ASSERT_TRUE(testcase["input"].IsString());
-    const std::string input = testcase["input"].GetString();
-    const std::string id =
-        testcase.HasMember("id") && testcase["id"].IsString()
-            ? testcase["id"].GetString()
-            : "(unknown id)";
-    ASSERT_TRUE(testcase.HasMember("expected"));
-    const auto& expectedObj = testcase["expected"];
-    ASSERT_TRUE(expectedObj.IsObject());
-    if (!expectedObj.HasMember(configName_.c_str())) {
-      continue;
+  for (const auto& testcasesPath :
+       std::vector<std::string>{testcasesPath_, cngovTestcasesPath_}) {
+    const std::string json = ReadFile(testcasesPath);
+    rapidjson::Document doc;
+    doc.Parse<rapidjson::kParseCommentsFlag |
+              rapidjson::kParseTrailingCommasFlag>(json.c_str());
+    ASSERT_FALSE(doc.HasParseError()) << testcasesPath;
+    ASSERT_TRUE(doc.IsObject()) << testcasesPath;
+    ASSERT_TRUE(doc.HasMember("cases")) << testcasesPath;
+    const auto& cases = doc["cases"];
+    ASSERT_TRUE(cases.IsArray()) << testcasesPath;
+
+    for (auto& testcase : cases.GetArray()) {
+      ASSERT_TRUE(testcase.IsObject()) << testcasesPath;
+      ASSERT_TRUE(testcase.HasMember("input")) << testcasesPath;
+      ASSERT_TRUE(testcase["input"].IsString()) << testcasesPath;
+      const std::string input = testcase["input"].GetString();
+      const std::string id =
+          testcase.HasMember("id") && testcase["id"].IsString()
+              ? testcase["id"].GetString()
+              : "(unknown id)";
+      ASSERT_TRUE(testcase.HasMember("expected")) << testcasesPath;
+      const auto& expectedObj = testcase["expected"];
+      ASSERT_TRUE(expectedObj.IsObject()) << testcasesPath;
+      if (!expectedObj.HasMember(configName_.c_str())) {
+        continue;
+      }
+      const auto& expectedValue = expectedObj[configName_.c_str()];
+      ASSERT_TRUE(expectedValue.IsString())
+          << "config=" << configName_ << " case=" << id;
+      const std::string expected = expectedValue.GetString();
+      SimpleConverter& converter = GetConverter(configName_);
+      EXPECT_EQ(expected, converter.Convert(input))
+          << "config=" << configName_ << " case=" << id;
+      ++checkedCases;
     }
-    const auto& expectedValue = expectedObj[configName_.c_str()];
-    ASSERT_TRUE(expectedValue.IsString())
-        << "config=" << configName_ << " case=" << id;
-    const std::string expected = expectedValue.GetString();
-    SimpleConverter& converter = GetConverter(configName_);
-    EXPECT_EQ(expected, converter.Convert(input))
-        << "config=" << configName_ << " case=" << id;
-    ++checkedCases;
   }
   EXPECT_GT(checkedCases, 0) << "No testcases found for config=" << configName_;
 }

@@ -94,6 +94,9 @@ TEST_F(CNGovValidationTest, ConvertExpectedOutputs) {
     for (auto itr = expectedObj.MemberBegin(); itr != expectedObj.MemberEnd();
          ++itr) {
       const std::string config = itr->name.GetString();
+      if (config.find("_jieba") != std::string::npos) {
+        continue;
+      }
       ASSERT_TRUE(itr->value.IsString());
       const std::string expected = itr->value.GetString();
       SimpleConverter& converter = GetConverter(config);

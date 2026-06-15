@@ -8,7 +8,7 @@
 
 > 🚀 **開箱即用的中文簡繁轉換程式庫** - 3 行程式碼搞定，自動從 CDN 載入設定和字典！
 
-OpenCC（Open Chinese Convert）的 WebAssembly 移植版本，完全相容原版 API。內建官方 OpenCC C++ 核心（透過 Emscripten 編譯），以及所有官方設定檔和預先建置的 `.ocd2` 字典檔。
+OpenCC（Open Chinese Convert）的 WebAssembly 移植版本，完全相容原版 API。內建官方 OpenCC C++ 核心（透過 Emscripten 編譯）、官方設定檔、隨附的大陸政府標準設定、Jieba 設定，以及預先建置的 `.ocd2` 字典檔。
 
 **授權條款：** Apache-2.0
 
@@ -17,7 +17,7 @@ OpenCC（Open Chinese Convert）的 WebAssembly 移植版本，完全相容原�
 - 🎯 **零設定** - 自動從 CDN 載入所有設定檔和字典檔
 - 🔥 **3 行開始** - 最簡單的 API，匯入即用
 - 🌐 **CDN 就緒** - 可直接從 jsDelivr/unpkg 使用，無需打包工具
-- 📦 **一應俱全** - 包含所有 14+ 種官方轉換類型
+- 📦 **一應俱全** - 包含官方轉換類型、Jieba 變體與隨附的大陸政府標準轉換
 - ⚡ **自動快取** - 資源首次載入後自動快取
 - 🔧 **完全相容** - 相容 `opencc-js` API
 - 🚫 **無需原生綁定** - 純 WASM，跨平台
@@ -30,7 +30,7 @@ OpenCC（Open Chinese Convert）的 WebAssembly 移植版本，完全相容原�
 ```html
 <script type="module">
   // 1. 從 CDN 匯入
-  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.4.1/dist/esm/index.js";
+  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.9.0/dist/esm/index.js";
 
   // 2. 建立轉換器（自動下載所有資源！）
   const converter = OpenCC.Converter({ config: "s2twp" });
@@ -97,24 +97,45 @@ console.log(await keepSimp("測試简体混繁體")); // 測試简体混繁體
 
 | 設定檔 | 說明 | 範例 |
 |--------|------|------|
-| `s2twp` | 簡體 → 台灣正體（含地域用詞轉換） | 軟體 → 軟體 |
+| `s2twp` | 簡體 → 台灣正體（含地域用詞轉換） | 软件 → 軟體 |
+| `s2twp_jieba` | 簡體 → 台灣正體（含地域用詞，Jieba 分詞） | 服务器软件 → 伺服器軟體 |
 | `s2tw` | 簡體 → 台灣正體 | 心里 → 心裡 |
+| `s2tw_jieba` | 簡體 → 台灣正體（Jieba 分詞） | 心里 → 心裡 |
 | `s2hk` | 簡體 → 香港繁體 | 心里  → 心裏 |
+| `s2hk_jieba` | 簡體 → 香港繁體（Jieba 分詞） | 心里 → 心裏 |
 | `s2t` | 簡體 → OpenCC 標準繁體 | 简体 → 簡體 |
+| `s2t_jieba` | 簡體 → OpenCC 標準繁體（Jieba 分詞） | 简体 → 簡體 |
+| `s2t_cngov` | 簡體 → 大陸政府標準繁體 | 简体 → 簡體 |
 | `tw2sp` | 台灣正體 → 簡體（含地域用詞轉換） | 滑鼠 → 鼠标 |
+| `tw2sp_jieba` | 台灣正體 → 簡體（含地域用詞，Jieba 分詞） | 伺服器軟體 → 服务器软件 |
 | `tw2s` | 台灣正體 → 簡體 | 軟體 → 软件 |
 | `tw2t` | 台灣正體 → OpenCC 標準繁體 | 吃飯 → 喫飯 |
 | `hk2s` | 香港繁體 → 簡體 | 打印機 → 打印机 |
 | `hk2t` | 香港繁體 → OpenCC 標準繁體 | 為 → 爲 |
 | `t2s` | OpenCC 標準繁體 → 簡體 | 繁體 → 繁体 |
+| `t2s_cngov` | OpenCC 標準繁體 → 大陸政府標準簡體 | 潮溼 → 潮湿 |
 | `t2tw` | OpenCC 標準繁體 → 台灣正體 | 牀 → 床 |
 | `t2hk` | OpenCC 標準繁體 → 香港繁體 | 爲 → 為 |
-| `jp2t` | 日文新字體 → 日文舊字體 | 桜花 → 櫻花 |
-| `t2jp` | 日文舊字體 → 日文新字體 | 櫻花 → 桜花 |
 | `t2cngov` | 繁體 → 大陸政府標準繁體 | 潮溼 → 潮湿 |
 | `t2cngov_keep_simp` | 繁體 → 大陸政府標準繁體（保留簡體） | 简体繁體 → 简体繁體 |
 | `t2cngov_jieba` | 繁體 → 大陸政府標準繁體（Jieba 分詞） | 測試简体混繁體 → 測試簡體混繁體 |
 | `t2cngov_keep_simp_jieba` | 繁體 → 大陸政府標準繁體（保留簡體，Jieba 分詞） | 測試简体混繁體 → 測試简体混繁體 |
+
+香港常用詞設定檔已隨包提供，但比照上游仍在開發中，歡迎補充詞組：
+
+| 設定檔 | 說明 | 範例 |
+|--------|------|------|
+| `s2hkp` | 簡體 → 香港繁體（含香港常用詞彙） | 软件 → 軟件 |
+| `s2hkp_jieba` | 簡體 → 香港繁體（含香港常用詞彙，Jieba 分詞） | 服务器软件 → 伺服器軟件 |
+| `hk2sp` | 香港繁體 → 簡體（含中國大陸常用詞彙） | 軟件 → 软件 |
+| `hk2sp_jieba` | 香港繁體 → 簡體（含中國大陸常用詞彙，Jieba 分詞） | 伺服器軟件 → 服务器软件 |
+
+日文漢字設定檔已隨包提供，但比照上游僅供探索性研究，不建議用於生產環境：
+
+| 設定檔 | 說明 | 範例 |
+|--------|------|------|
+| `t2jp` | 日文舊字體 → 日文新字體 | 櫻花 → 桜花 |
+| `jp2t` | 日文新字體 → 日文舊字體，並將少量日文詞組轉換為對應中文 | 桜花 → 櫻花 |
 
 #### 方式 2：使用 `from`/`to` 參數（与 `opencc-js` 相容）
 
@@ -133,12 +154,19 @@ const result = await converter("服务器");  // 伺服器
 | `tw` | 繁體中文（台灣） |
 | `twp` | 台灣正體（含慣用詞） |
 | `hk` | 繁體中文（香港） |
+| `hkp` | 香港繁體（含慣用詞） |
 | `t` | 繁體中文（通用） |
 | `s` | 簡體中文（別名） |
 | `sp` | 簡體（含慣用詞） |
 | `jp` | 日文新字體 |
 
 **兩種方式功能完全相同！** 選擇您喜歡的即可。
+
+## 📦 內建資料版本
+
+- OpenCC 上游：`71964afa6c7f`
+- 大陸政府標準詞典：`Transformer(1.3.7)`（`da403c620a17`）
+- 發行資源已用目前隨附的設定檔與 `.ocd2` 詞典重新產生到 `dist/data/`。
 
 ### OpenCC.ConverterFactory() - 含自訂字典的轉換器
 
@@ -401,6 +429,14 @@ A：首次載入需要下載設定檔和字典檔（約 1-2MB）。後續轉換�
 - 效能：專注於精確度和與官方 OpenCC 的相容性。原始吞吐量可能比純 JavaScript 實作慢，但保證完整的 OpenCC 行為。
 
 ## 📜 變更歷史
+
+### 0.9.0 - 2026-06-15
+
+- 將隨附資源對齊 OpenCC 上游 `71964afa6c7f`
+- 大陸政府標準詞典更新到 `Transformer(1.3.7)`（`da403c620a17`）
+- 隨包提供上游香港常用詞轉換設定：`s2hkp`、`hk2sp`，以及對應 Jieba 變體；這些設定仍在開發中
+- 新增隨附的 `s2t_cngov`、`t2s_cngov` 設定並刷新 wasm 詞典資源
+- 配合上游 resource/dictionary 拆分更新 wasm build input，並重新產生可發布的 `dist/` 產物
 
 ### 0.8.1 - 2026-04-22
 
