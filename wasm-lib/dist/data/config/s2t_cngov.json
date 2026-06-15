@@ -1,12 +1,5 @@
 {
   "name": "Simplified Chinese to Traditional Chinese (The Chinese Government Standard)",
-  "author": "TerryTian-tech",
-  "license": "Apache License 2.0",
-  "source": "https://github.com/TerryTian-tech/OpenCC-Traditional-Chinese-characters-according-to-Chinese-government-standards",
-  "contributors": ["TerryTian-tech", "Yi Jianpeng", "Hu Xinmei", "Duan Yatong"],
-  "reference": "《通用规范汉字表》(2013)",
-  "description": "Conservative conversion that preserves intentional simplified characters in mixed documents while standardizing traditional characters only.",
-
   "segmentation": {
     "type": "mmseg",
     "dict": {

@@ -27,8 +27,8 @@
       "input": "㑮",
       "expected_segmentation": "㑮",
       "expected": {
-        "tw2sp_jieba": "㑮",
-        "hk2sp_jieba": "㑮"
+        "tw2sp_jieba": "𫝈",
+        "hk2sp_jieba": "𫝈"
       }
     },
     {
@@ -160,7 +160,7 @@
       "input": "奶茶店慰藉著旅者的味蕾",
       "expected_segmentation": "奶茶/店/慰藉/著/旅者/的/味蕾",
       "expected": {
-        "tw2sp": "奶茶店慰借着旅者的味蕾",
+        "tw2sp": "奶茶店慰藉着旅者的味蕾",
         "tw2sp_jieba": "奶茶店慰藉着旅者的味蕾"
       }
     },
