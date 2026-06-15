@@ -133,6 +133,8 @@ const configs = [
   's2t_jieba.json',
   's2tw_jieba.json',
   's2twp_jieba.json',
+  't2cngov_jieba.json',
+  't2cngov_keep_simp_jieba.json',
   'tw2sp_jieba.json',
 ];
 for (const configFile of configs) {

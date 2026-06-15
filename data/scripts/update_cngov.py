@@ -20,12 +20,15 @@ TEXT_FILES = [
 ]
 
 CONFIG_MAP = {
-    "s2t.json": "s2t_cngov.json",
-    "t2gov.json": "t2cngov.json",
-    "t2gov_jieba.json": "t2cngov_jieba.json",
-    "t2gov_keep_simp.json": "t2cngov_keep_simp.json",
-    "t2gov_keep_simp_jieba.json": "t2cngov_keep_simp_jieba.json",
-    "t2s.json": "t2s_cngov.json",
+    "s2t.json": ("data/config", "s2t_cngov.json"),
+    "t2gov.json": ("data/config", "t2cngov.json"),
+    "t2gov_jieba.json": ("plugins/jieba/data/config", "t2cngov_jieba.json"),
+    "t2gov_keep_simp.json": ("data/config", "t2cngov_keep_simp.json"),
+    "t2gov_keep_simp_jieba.json": (
+        "plugins/jieba/data/config",
+        "t2cngov_keep_simp_jieba.json",
+    ),
+    "t2s.json": ("data/config", "t2s_cngov.json"),
 }
 
 LOCAL_METADATA_KEYS = {
@@ -96,6 +99,12 @@ def substantive_view(obj):
     return {k: v for k, v in obj.items() if k not in LOCAL_METADATA_KEYS}
 
 
+def strip_local_metadata(candidate):
+    if not isinstance(candidate, dict):
+        return candidate
+    return {k: v for k, v in candidate.items() if k not in LOCAL_METADATA_KEYS}
+
+
 def json_bytes(obj) -> bytes:
     return (json.dumps(obj, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
 
@@ -113,21 +122,20 @@ def sync_texts(src_dir: Path, dst_dir: Path, dry_run: bool):
     return changed
 
 
-def sync_configs(src_dir: Path, dst_dir: Path, dry_run: bool):
+def sync_configs(src_dir: Path, root: Path, dry_run: bool):
     print("[config]")
     changed = 0
-    for src_name, dst_name in CONFIG_MAP.items():
+    for src_name, (dst_relative_dir, dst_name) in CONFIG_MAP.items():
         src = src_dir / src_name
-        dst = dst_dir / dst_name
+        dst = root / dst_relative_dir / dst_name
         if not src.exists():
             raise FileNotFoundError(f"Missing upstream config: {src}")
 
         upstream = load_json(src)
-        candidate = rewrite_dict_refs(upstream)
+        candidate = strip_local_metadata(rewrite_dict_refs(upstream))
 
         local = load_json(dst) if dst.exists() else None
         if local is not None:
-            candidate = merge_local_metadata(candidate, local)
             substantive_changed = substantive_view(local) != substantive_view(candidate)
         else:
             substantive_changed = True
@@ -136,14 +144,15 @@ def sync_configs(src_dir: Path, dst_dir: Path, dry_run: bool):
         new_bytes = json_bytes(candidate)
         if current_bytes == new_bytes:
             suffix = " (substantive)" if substantive_changed else ""
-            print(f"UNCHANGED data/config/{dst_name}{suffix}")
+            print(f"UNCHANGED {dst_relative_dir}/{dst_name}{suffix}")
             continue
         if not substantive_changed:
-            print(f"UNCHANGED data/config/{dst_name} (metadata/format only)")
+            print(f"UNCHANGED {dst_relative_dir}/{dst_name} (metadata/format only)")
             continue
 
-        print(f"UPDATED   data/config/{dst_name} (substantive)")
+        print(f"UPDATED   {dst_relative_dir}/{dst_name} (substantive)")
         if not dry_run:
+            dst.parent.mkdir(parents=True, exist_ok=True)
             dst.write_bytes(new_bytes)
         changed += 1
     return changed
@@ -169,14 +178,13 @@ def main():
     root = repo_root()
     src_dir = args.source_dir or (root / "deps" / "cngov" / "t2gov")
     dict_dir = root / "data" / "dictionary" / "cngov"
-    config_dir = root / "data" / "config"
 
     if not src_dir.exists():
         print(f"Source directory not found: {src_dir}", file=sys.stderr)
         return 1
 
     dict_changed = sync_texts(src_dir, dict_dir, args.dry_run)
-    config_changed = sync_configs(src_dir, config_dir, args.dry_run)
+    config_changed = sync_configs(src_dir, root, args.dry_run)
 
     print(
         f"Done. dictionary_changed={dict_changed} config_changed={config_changed} "

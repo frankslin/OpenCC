@@ -34,6 +34,7 @@ const CONFIG_MAP = {
     tw: "s2tw.json",
     twp: "s2twp.json",  // 台湾惯用词
     hk: "s2hk.json",
+    hkp: "s2hkp.json",  // 香港惯用词
     cn: null
   },
   tw: {
@@ -46,6 +47,7 @@ const CONFIG_MAP = {
   hk: {
     cn: "hk2s.json",
     s: "hk2s.json",     // 别名
+    sp: "hk2sp.json",   // 简体惯用词
     t: "hk2t.json",
     hk: null
   },
