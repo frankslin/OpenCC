@@ -9,9 +9,9 @@ const readFileText = (url) => fs.readFileSync(fileURLToPath(url), "utf-8");
 const readFileBuffer = (url) => fs.readFileSync(fileURLToPath(url));
 
 const CONFIG_MAP = {
-  cn: { t: "s2t.json", tw: "s2tw.json", hk: "s2hk.json", cn: null },
-  tw: { cn: "tw2s.json", t: "tw2t.json", tw: null },
-  hk: { cn: "hk2s.json", t: "hk2t.json", hk: null },
+  cn: { t: "s2t.json", tw: "s2tw.json", twp: "s2twp.json", hk: "s2hk.json", hkp: "s2hkp.json", cn: null },
+  tw: { cn: "tw2s.json", s: "tw2s.json", sp: "tw2sp.json", t: "tw2t.json", tw: null },
+  hk: { cn: "hk2s.json", s: "hk2s.json", sp: "hk2sp.json", t: "hk2t.json", hk: null },
   t: { cn: "t2s.json", tw: "t2tw.json", hk: "t2hk.json", jp: "t2jp.json", t: null },
   jp: { t: "jp2t.json" },
 };
