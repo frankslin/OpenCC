@@ -5,7 +5,8 @@
       "description": "Basic character conversion",
       "input": "盫",
       "expected": {
-        "t2cngov": "盦"
+        "t2cngov": "盦",
+        "t2cngov_jieba": "盦"
       }
     },
     {
@@ -13,7 +14,9 @@
       "description": "Mixed simplified-traditional (convert all)",
       "input": "简体混杂繁體",
       "expected": {
-        "t2cngov": "簡體混雜繁體"
+        "s2t_cngov": "簡體混雜繁體",
+        "t2cngov": "簡體混雜繁體",
+        "t2cngov_jieba": "簡體混雜繁體"
       }
     },
     {
@@ -21,7 +24,8 @@
       "description": "Mixed simplified-traditional (keep simplified)",
       "input": "简体混杂繁體",
       "expected": {
-        "t2cngov_keep_simp": "简体混杂繁體"
+        "t2cngov_keep_simp": "简体混杂繁體",
+        "t2cngov_keep_simp_jieba": "简体混杂繁體"
       }
     },
     {
@@ -30,7 +34,10 @@
       "input": "潮溼的露臺",
       "expected": {
         "t2cngov": "潮濕的露臺",
-        "t2cngov_keep_simp": "潮濕的露臺"
+        "t2cngov_jieba": "潮濕的露臺",
+        "t2cngov_keep_simp": "潮濕的露臺",
+        "t2cngov_keep_simp_jieba": "潮濕的露臺",
+        "t2s_cngov": "潮湿的露台"
       }
     },
     {
@@ -38,7 +45,9 @@
       "description": "Phrase conversion",
       "input": "一乾二淨",
       "expected": {
-        "t2cngov": "一乾二净"
+        "t2cngov": "一乾二净",
+        "t2cngov_jieba": "一乾二净",
+        "t2s_cngov": "一干二净"
       }
     }
   ]

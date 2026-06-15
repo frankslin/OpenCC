@@ -8,7 +8,7 @@
 
 > 🚀 **Out-of-the-box Chinese text conversion library** - 3 lines of code, auto-loads configs and dictionaries from CDN!
 
-WebAssembly port of OpenCC (Open Chinese Convert) with full API compatibility. Bundles the official OpenCC C++ core compiled via Emscripten, plus all official configs and prebuilt `.ocd2` dictionaries.
+WebAssembly port of OpenCC (Open Chinese Convert) with full API compatibility. Bundles the official OpenCC C++ core compiled via Emscripten, official configs, bundled CN Government Standard configs, Jieba-backed configs, and prebuilt `.ocd2` dictionaries.
 
 **License:** Apache-2.0
 
@@ -17,7 +17,7 @@ WebAssembly port of OpenCC (Open Chinese Convert) with full API compatibility. B
 - 🎯 **Zero Configuration** - Auto-loads all configs and dictionaries from CDN
 - 🔥 **3 Lines to Start** - Simplest API, just import and use
 - 🌐 **CDN Ready** - Use directly from jsDelivr/unpkg without bundler
-- 📦 **All-in-One** - Includes all 14+ official conversion types
+- 📦 **All-in-One** - Includes official conversion types, Jieba variants, and bundled CN Government Standard conversions
 - ⚡ **Auto Caching** - Resources cached after first load
 - 🔧 **Full Compatibility** - Compatible with `opencc-js` API
 - 🚫 **No Native Bindings** - Pure WASM, cross-platform
@@ -30,7 +30,7 @@ WebAssembly port of OpenCC (Open Chinese Convert) with full API compatibility. B
 ```html
 <script type="module">
   // 1. Import from CDN
-  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.4.1/dist/esm/index.js";
+  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.9.0/dist/esm/index.js";
 
   // 2. Create converter (auto-downloads everything!)
   const converter = OpenCC.Converter({ config: "s2twp" });
@@ -98,23 +98,44 @@ console.log(await keepSimp("測試简体混繁體")); // 測試简体混繁體
 | Config | Description | Example |
 |--------|-------------|---------|
 | `s2twp` | Simplified → Taiwan Traditional (with regional phrases) | 软件 → 軟體 |
+| `s2twp_jieba` | Simplified → Taiwan Traditional (with phrases, Jieba segmentation) | 服务器软件 → 伺服器軟體 |
 | `s2tw` | Simplified → Taiwan Traditional | 心里 → 心裡 |
+| `s2tw_jieba` | Simplified → Taiwan Traditional (Jieba segmentation) | 心里 → 心裡 |
 | `s2hk` | Simplified → Hong Kong Traditional | 心里  → 心裏 |
+| `s2hk_jieba` | Simplified → Hong Kong Traditional (Jieba segmentation) | 心里 → 心裏 |
 | `s2t` | Simplified → OpenCC Standard Traditional | 简体 → 簡體 |
+| `s2t_jieba` | Simplified → OpenCC Standard Traditional (Jieba segmentation) | 简体 → 簡體 |
+| `s2t_cngov` | Simplified → CN Gov Standard Traditional | 简体 → 簡體 |
 | `tw2sp` | Taiwan → Simplified (with regional phrases) | 滑鼠 → 鼠标 |
+| `tw2sp_jieba` | Taiwan → Simplified (with phrases, Jieba segmentation) | 伺服器軟體 → 服务器软件 |
 | `tw2s` | Taiwan → Simplified | 軟體 → 软件 |
 | `tw2t` | Taiwan → Traditional | 吃飯 → 喫飯 |
 | `hk2s` | Hong Kong → Simplified | 打印機 → 打印机 |
 | `hk2t` | Hong Kong → Traditional | 為 → 爲 |
 | `t2s` | OpenCC Standard Traditional → Simplified | 繁體 → 繁体 |
+| `t2s_cngov` | OpenCC Standard Traditional → CN Gov Simplified | 潮溼 → 潮湿 |
 | `t2tw` | OpenCC Standard Traditional → Taiwan | 牀 → 床 |
 | `t2hk` | OpenCC Standard Traditional → Hong Kong | 爲 → 為 |
-| `jp2t` | Japanese Shinjitai → Traditional | 桜花 → 櫻花 |
-| `t2jp` | Traditional → Japanese Shinjitai | 櫻花 → 桜花 |
 | `t2cngov` | Traditional → CN Gov Standard | 潮溼 → 潮湿 |
 | `t2cngov_keep_simp` | Traditional → CN Gov (Keep Simp) | 简体繁體 → 简体繁體 |
 | `t2cngov_jieba` | Traditional → CN Gov Standard (Jieba segmentation) | 測試简体混繁體 → 測試簡體混繁體 |
 | `t2cngov_keep_simp_jieba` | Traditional → CN Gov (Keep Simp, Jieba segmentation) | 測試简体混繁體 → 測試简体混繁體 |
+
+Hong Kong phrase configs are bundled but still under active development, matching their upstream status:
+
+| Config | Description | Example |
+|--------|-------------|---------|
+| `s2hkp` | Simplified → Hong Kong Traditional (with Hong Kong phrases) | 软件 → 軟件 |
+| `s2hkp_jieba` | Simplified → Hong Kong Traditional (with Hong Kong phrases, Jieba segmentation) | 服务器软件 → 伺服器軟件 |
+| `hk2sp` | Hong Kong Traditional → Simplified (with Mainland China phrases) | 軟件 → 软件 |
+| `hk2sp_jieba` | Hong Kong Traditional → Simplified (with Mainland China phrases, Jieba segmentation) | 伺服器軟件 → 服务器软件 |
+
+Japanese Kanji configs are bundled for exploratory use and are not recommended for production:
+
+| Config | Description | Example |
+|--------|-------------|---------|
+| `t2jp` | Old Japanese Kanji (Kyujitai) → New Japanese Kanji (Shinjitai) | 櫻花 → 桜花 |
+| `jp2t` | New Japanese Kanji (Shinjitai) → Old Japanese Kanji (Kyujitai), with a few Japanese phrases converted to Chinese equivalents | 桜花 → 櫻花 |
 
 #### Method 2: Using `from`/`to` parameters (compatible with `opencc-js`)
 
@@ -133,12 +154,19 @@ const result = await converter("服务器");  // 伺服器
 | `tw` | Traditional Chinese (Taiwan) |
 | `twp` | Taiwan with phrases |
 | `hk` | Traditional Chinese (Hong Kong) |
+| `hkp` | Hong Kong with phrases |
 | `t` | Traditional Chinese (general) |
 | `s` | Simplified Chinese (alias) |
 | `sp` | Simplified with phrases |
 | `jp` | Japanese Shinjitai |
 
 **Both methods work identically!** Choose what you prefer.
+
+## 📦 Bundled Data Versions
+
+- OpenCC upstream: `71964afa6c7f`
+- CN Government Standard dictionaries: `Transformer(1.3.7)` (`da403c620a17`)
+- Release assets are regenerated into `dist/data/` with the current bundled configs and `.ocd2` dictionaries.
 
 ### OpenCC.ConverterFactory() - With Custom Dictionary
 
@@ -401,6 +429,14 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 - Performance: Focuses on fidelity and compatibility with official OpenCC. May be slower than pure-JS implementations for raw throughput, but guarantees full OpenCC behavior.
 
 ## 📜 Changelog
+
+### 0.9.0 - 2026-06-15
+
+- Aligned bundled assets with OpenCC upstream `71964afa6c7f`
+- Updated CN Government Standard dictionaries to `Transformer(1.3.7)` (`da403c620a17`)
+- Bundled upstream Hong Kong phrase configs: `s2hkp`, `hk2sp`, plus Jieba-backed variants; these configs remain under active development
+- Added bundled `s2t_cngov` and `t2s_cngov` configs and refreshed wasm dictionary assets
+- Updated wasm build inputs for the upstream resource/dictionary split and regenerated publishable `dist/` artifacts
 
 ### 0.8.1 - 2026-04-22
 

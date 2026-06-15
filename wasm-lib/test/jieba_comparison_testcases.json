@@ -22,6 +22,16 @@
       }
     },
     {
+      "id": "jieba_t2s_tofu_001",
+      "description": "Tofu-risk dictionary is skipped by default in CLI",
+      "input": "㑮",
+      "expected_segmentation": "㑮",
+      "expected": {
+        "tw2sp_jieba": "𫝈",
+        "hk2sp_jieba": "𫝈"
+      }
+    },
+    {
       "id": "jieba_s2t_002",
       "description": "Compound words: 中学生 (middle school student) and 中等身材 (medium build)",
       "input": "一个中学生，一个中等身材的人",
@@ -150,7 +160,7 @@
       "input": "奶茶店慰藉著旅者的味蕾",
       "expected_segmentation": "奶茶/店/慰藉/著/旅者/的/味蕾",
       "expected": {
-        "tw2sp": "奶茶店慰借着旅者的味蕾",
+        "tw2sp": "奶茶店慰藉着旅者的味蕾",
         "tw2sp_jieba": "奶茶店慰藉着旅者的味蕾"
       }
     },
@@ -162,6 +172,17 @@
       "expected": {
         "s2twp": "城堡計程車兵已經出發",
         "s2twp_jieba": "城堡的士兵已經出發"
+      }
+    },
+    {
+      "id": "jieba_s2t_BYVoid_OpenCC_PR1248",
+      "description": "Jieba configs should apply regional variant phrase exceptions before per-character 皁 -> 皂 variants",
+      "input": "牛骥同皁 牛骥同皂 牛骥同一皁 牛骥同一皂",
+      "expected_segmentation": "牛骥同皁/ /牛骥同皂/ /牛骥同一皁/ /牛骥同一皂",
+      "expected": {
+        "s2tw_jieba": "牛驥同皁 牛驥同皁 牛驥同一皁 牛驥同一皁",
+        "s2hk_jieba": "牛驥同皁 牛驥同皁 牛驥同一皁 牛驥同一皁",
+        "s2twp_jieba": "牛驥同皁 牛驥同皁 牛驥同一皁 牛驥同一皁"
       }
     },
     {

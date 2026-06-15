@@ -355,6 +355,9 @@ TEST_F(CommandLineConvertTest, ConvertFromJson) {
 
   for (const auto& entry : cases) {
     const std::string& config = entry.first;
+    if (config.find("_jieba") != std::string::npos) {
+      continue;
+    }
     const std::string inputFile = InputFile(config.c_str());
     const std::string outputFile = OutputFile(config.c_str());
 
@@ -1319,6 +1322,9 @@ TEST_F(CommandLineConvertTest, ConvertCNGovFromJson) {
 
   for (const auto& entry : cases) {
     const std::string& config = entry.first;
+    if (config.find("_jieba") != std::string::npos) {
+      continue;
+    }
     const std::string inputFile = InputFile(config.c_str());
     const std::string outputFile = OutputFile(config.c_str());
 
