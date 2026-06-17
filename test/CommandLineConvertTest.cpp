@@ -196,6 +196,8 @@ protected:
         configFile.substr(0, configFile.find_last_of("/\\"));
     cmd += " --path " + QuotePath(dictDir + "/") +
            " --path " + QuotePath(configDir + "/");
+#else
+    cmd += " --path " + QuotePath(PROJECT_SOURCE_DIR "/data/dictionary/");
 #endif
 #ifdef _WIN32
     // On Windows, cmd.exe /C strips the first and last quote characters when
@@ -258,6 +260,8 @@ protected:
         configFile.substr(0, configFile.find_last_of("/\\"));
     cmd += " --path " + QuotePath(dictDir + "/") +
            " --path " + QuotePath(configDir + "/");
+#else
+    cmd += " --path " + QuotePath(PROJECT_SOURCE_DIR "/data/dictionary/");
 #endif
     cmd += " < " + QuotePath(inputFile) + " > " + QuotePath(outputFile);
 #ifdef _WIN32
@@ -284,6 +288,8 @@ protected:
         configFile.substr(0, configFile.find_last_of("/\\"));
     cmd += " --path " + QuotePath(dictDir + "/") +
            " --path " + QuotePath(configDir + "/");
+#else
+    cmd += " --path " + QuotePath(PROJECT_SOURCE_DIR "/data/dictionary/");
 #endif
     cmd += " > " + QuotePath(outputFile);
     return cmd;
@@ -1203,7 +1209,7 @@ TEST_F(CommandLineConvertTest, ConvertCNGovFromJson) {
       runfiles_->Rlocation("_main/test/testcases/cngov_testcases.json");
 #else
   const std::string casesPath =
-      CMAKE_SOURCE_DIR "/test/testcases/cngov_testcases.json";
+      PROJECT_SOURCE_DIR "/test/testcases/cngov_testcases.json";
 #endif
   const CasesByConfig cases = LoadCases(casesPath);
 
