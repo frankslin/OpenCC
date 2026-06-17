@@ -41,6 +41,7 @@ filegroup(
         data = [
             config,
             "//data/dictionary:binary_dictionaries",
+            "//data/dictionary:text_dictionaries",
             "//test/testcases",
         ],
         deps = [
@@ -97,6 +98,7 @@ cc_test(
     data = [
         ":config",
         "//data/dictionary:binary_dictionaries",
+        "//data/dictionary:text_dictionaries",
         "//test/testcases",
     ],
     deps = [
