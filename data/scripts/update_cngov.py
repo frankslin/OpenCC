@@ -66,10 +66,15 @@ def rewrite_dict_refs(node):
         out = {}
         for key, value in node.items():
             out[key] = rewrite_dict_refs(value)
-        if out.get("type") == "text":
-            out["type"] = "ocd2"
-        if isinstance(out.get("file"), str) and out["file"].endswith(".txt"):
-            out["file"] = "cngov/" + out["file"][:-4] + ".ocd2"
+        if isinstance(out.get("file"), str):
+            file_name = out["file"]
+            if file_name.startswith("cngov/"):
+                file_name = file_name[len("cngov/"):]
+            if file_name.endswith(".ocd2"):
+                file_name = file_name[:-5] + ".txt"
+            if file_name.endswith(".txt"):
+                out["type"] = "text"
+                out["file"] = "cngov/" + file_name
         if out.get("user_dict_path") == "jieba_dict/user.dict.traditional.utf8":
             out["user_dict_path"] = "jieba_dict/user.dict.utf8"
         return out
