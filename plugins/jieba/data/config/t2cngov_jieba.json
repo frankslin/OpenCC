@@ -14,12 +14,12 @@
         "type": "group",
         "dicts": [
           {
-            "type": "ocd2",
-            "file": "cngov/TGPhrases.ocd2"
+            "type": "text",
+            "file": "cngov/TGPhrases.txt"
           },
           {
-            "type": "ocd2",
-            "file": "cngov/TGCharacters.ocd2"
+            "type": "text",
+            "file": "cngov/TGCharacters.txt"
           }
         ]
       }
