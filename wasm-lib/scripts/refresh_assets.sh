@@ -23,13 +23,22 @@ DICT_DST="${ROOT}/data/dict"
 mkdir -p "${DICT_DST}"
 # Ensure target writable (some checked-in artifacts may be read-only)
 chmod -R u+w "${DICT_DST}"
-echo "Collecting required .ocd2 names from data/config/*.json"
+CONFIG_SOURCES=(data/config/*.json plugins/jieba/data/config/*.json)
+
+echo "Collecting required .ocd2 names from config JSON"
 NEEDED_DICTS=()
 while IFS= read -r line; do
   [[ -n "$line" ]] && NEEDED_DICTS+=("$line")
 done <<< "$(
-  grep -h -E -o '"file"[[:space:]]*:[[:space:]]*"[^"]*\.ocd2"' data/config/*.json \
+  grep -h -E -o '"file"[[:space:]]*:[[:space:]]*"[^"]*\.ocd2"' "${CONFIG_SOURCES[@]}" \
     | sed -E 's/.*"file"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' | sort -u
+)"
+
+while IFS= read -r line; do
+  [[ -n "$line" ]] && NEEDED_DICTS+=("$line")
+done <<< "$(
+  grep -h -E -o '"file"[[:space:]]*:[[:space:]]*"cngov/[^"]*\.txt"' "${CONFIG_SOURCES[@]}" \
+    | sed -E 's/.*"file"[[:space:]]*:[[:space:]]*"cngov\/([^"]+)\.txt".*/cngov\/\1.ocd2/' | sort -u
 )"
 
 # If no matches (unexpected), fall back to all .ocd2
@@ -69,6 +78,37 @@ rm -f "${CONFIG_DST}"/*.json
 echo "Copying config JSON into ${CONFIG_DST}"
 install -m 644 "${ROOT}/../data/config"/*.json "${CONFIG_DST}/"
 install -m 644 "${ROOT}/../plugins/jieba/data/config"/*.json "${CONFIG_DST}/"
+node --input-type=module - "${CONFIG_DST}" <<'NODE'
+import fs from "node:fs";
+import path from "node:path";
+
+function rewriteDictRefs(node) {
+  let changed = false;
+  if (Array.isArray(node)) {
+    for (const item of node) changed = rewriteDictRefs(item) || changed;
+    return changed;
+  }
+  if (!node || typeof node !== "object") return false;
+  if (node.type === "text" && typeof node.file === "string" &&
+      node.file.startsWith("cngov/") && node.file.endsWith(".txt")) {
+    node.type = "ocd2";
+    node.file = node.file.replace(/\.txt$/, ".ocd2");
+    changed = true;
+  }
+  for (const value of Object.values(node)) changed = rewriteDictRefs(value) || changed;
+  return changed;
+}
+
+const configDir = process.argv[2];
+for (const name of fs.readdirSync(configDir)) {
+  if (!name.endsWith(".json")) continue;
+  const file = path.join(configDir, name);
+  const config = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (rewriteDictRefs(config)) {
+    fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
+  }
+}
+NODE
 
 JIEBA_DST="${ROOT}/data/jieba_dict"
 JIEBA_SRC="${ROOT}/../plugins/jieba/deps/cppjieba/dict"
