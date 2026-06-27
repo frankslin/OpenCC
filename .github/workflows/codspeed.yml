@@ -2,9 +2,9 @@ name: CodSpeed
 
 on:
   push:
-    branches: [master]
+    branches: [master, opencc-wasm-develop]
   pull_request:
-    branches: [master]
+    branches: [master, opencc-wasm-develop]
   # Allow CodSpeed to trigger benchmark runs manually (e.g. to backfill data).
   workflow_dispatch:
 
