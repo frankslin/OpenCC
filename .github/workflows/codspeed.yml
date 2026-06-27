@@ -2,9 +2,9 @@ name: CodSpeed
 
 on:
   push:
-    branches: [master]
+    branches: [master, opencc-wasm-develop]
   pull_request:
-    branches: [master]
+    branches: [master, opencc-wasm-develop]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
