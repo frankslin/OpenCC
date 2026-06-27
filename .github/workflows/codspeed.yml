@@ -41,7 +41,12 @@ jobs:
           fi
 
       - name: Build benchmark
-        run: bazel build //src/benchmark:performance
+        run: >-
+          bazel build
+          --@codspeed_google_benchmark_compat//:codspeed_mode=simulation
+          --compilation_mode=dbg
+          --copt=-O2
+          //src/benchmark:performance
 
       - name: Prepare temp directory
         run: mkdir -p /tmp/opencc_bench_temp

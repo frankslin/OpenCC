@@ -1042,9 +1042,11 @@ bool RegisterBenchmarks() {
   return true;
 }
 
-const bool kBenchmarksRegistered = RegisterBenchmarks();
-
 } // namespace
+
+void DoRegisterBenchmarks() {
+  RegisterBenchmarks();
+}
 
 } // namespace opencc
 
@@ -1056,6 +1058,7 @@ int main(int argc, char** argv) {
     g_runfiles.reset(BazelRunfiles::Create(g_argv0 != nullptr ? g_argv0 : "", &err));
   }
 #endif
+  opencc::DoRegisterBenchmarks();
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv)) {
     return 1;

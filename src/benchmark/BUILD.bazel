@@ -8,7 +8,7 @@ cc_binary(
     srcs = ["Performance.cpp"],
     includes = [".."],
     deps = [
-        "//deps/google-benchmark:benchmark",
+        "@codspeed_google_benchmark_compat//:benchmark",
         "//deps/rapidjson-1.1.0:rapidjson",
         "//src:exception_lib",
         "//src:simple_converter_lib",
