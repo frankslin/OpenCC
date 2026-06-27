@@ -698,9 +698,12 @@ std::string FormatCounterValue(const benchmark::BenchmarkReporter::Run& run,
 
 std::string BenchmarkGroupName(const benchmark::BenchmarkReporter::Run& run) {
   const std::string name = run.benchmark_name();
-  const std::string::size_type slash_pos = name.find('/');
+  const std::string::size_type colons_pos = name.find("::");
+  const std::string bare_name =
+      colons_pos != std::string::npos ? name.substr(colons_pos + 2) : name;
+  const std::string::size_type slash_pos = bare_name.find('/');
   const std::string prefix =
-      slash_pos == std::string::npos ? name : name.substr(0, slash_pos);
+      slash_pos == std::string::npos ? bare_name : bare_name.substr(0, slash_pos);
   if (prefix == "BM_Initialization") {
     return "Initialization";
   }
@@ -991,7 +994,7 @@ bool RegisterBenchmarks() {
       BuildBenchmarkConfigs(InitializationConfigs());
   for (const BenchmarkConfig& config : initialization_configs) {
     benchmark::RegisterBenchmark(
-        ("BM_Initialization/" + config.name).c_str(),
+        ("Performance::BM_Initialization/" + config.name).c_str(),
         [config](benchmark::State& state) { BM_Initialization(state, config); })
         ->Unit(benchmark::kMicrosecond);
   }
@@ -1000,7 +1003,7 @@ bool RegisterBenchmarks() {
       BuildBenchmarkConfigs(ConversionConfigs());
   for (const BenchmarkConfig& config : conversion_configs) {
     benchmark::RegisterBenchmark(
-        ("BM_ConvertLongText/" + config.name).c_str(),
+        ("Performance::BM_ConvertLongText/" + config.name).c_str(),
         [config](benchmark::State& state) { BM_ConvertLongText(state, config); })
         ->Unit(benchmark::kMillisecond);
   }
@@ -1008,7 +1011,7 @@ bool RegisterBenchmarks() {
   for (const BenchmarkConfig& config : conversion_configs) {
     for (const int iteration : {100, 1000, 10000, 100000}) {
       benchmark::RegisterBenchmark(
-          ("BM_Convert/" + config.name + "/" + std::to_string(iteration))
+          ("Performance::BM_Convert/" + config.name + "/" + std::to_string(iteration))
               .c_str(),
           [config, iteration](benchmark::State& state) {
             BM_Convert(state, config, iteration);
@@ -1019,7 +1022,7 @@ bool RegisterBenchmarks() {
 
   for (const BenchmarkConfig& config : conversion_configs) {
     benchmark::RegisterBenchmark(
-        ("BM_CommandLineLongText/" + config.name).c_str(),
+        ("Performance::BM_CommandLineLongText/" + config.name).c_str(),
         [config](benchmark::State& state) {
           BM_CommandLineLongText(state, config);
         })
@@ -1030,7 +1033,7 @@ bool RegisterBenchmarks() {
   for (const BenchmarkConfig& config : conversion_configs) {
     for (const int iteration : {100, 1000, 10000, 100000}) {
       benchmark::RegisterBenchmark(
-          ("BM_CommandLine/" + config.name + "/" + std::to_string(iteration))
+          ("Performance::BM_CommandLine/" + config.name + "/" + std::to_string(iteration))
               .c_str(),
           [config, iteration](benchmark::State& state) {
             BM_CommandLine(state, config, iteration);

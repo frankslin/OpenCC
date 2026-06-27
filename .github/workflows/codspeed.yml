@@ -46,6 +46,7 @@ jobs:
           --@codspeed_google_benchmark_compat//:codspeed_mode=simulation
           --compilation_mode=dbg
           --copt=-O2
+          --copt=-DNDEBUG
           //src/benchmark:performance
 
       - name: Prepare temp directory
