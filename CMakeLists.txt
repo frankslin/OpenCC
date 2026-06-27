@@ -334,7 +334,26 @@ endif()
 
 if (ENABLE_BENCHMARK)
   set(BENCHMARK_ENABLE_TESTING OFF)
-  if(NOT USE_SYSTEM_GOOGLE_BENCHMARK)
+  # When CODSPEED_MODE is enabled, build against CodSpeed's instrumented fork of
+  # Google Benchmark so that benchmarks can be measured by CodSpeed. Otherwise
+  # fall back to the bundled (or system) Google Benchmark.
+  if(DEFINED CODSPEED_MODE AND NOT CODSPEED_MODE STREQUAL "off")
+    include(FetchContent)
+    FetchContent_Declare(
+      google_benchmark
+      GIT_REPOSITORY https://github.com/CodSpeedHQ/codspeed-cpp
+      GIT_TAG main
+      SOURCE_SUBDIR google_benchmark
+    )
+    # Build CodSpeed's benchmark + core libraries as static. Their symbols are
+    # compiled with hidden visibility and would not be exported from a shared
+    # library, so static linking is required for them to resolve in the
+    # benchmark executable regardless of the project's BUILD_SHARED_LIBS value.
+    set(_OPENCC_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(google_benchmark)
+    set(BUILD_SHARED_LIBS ${_OPENCC_SAVED_BUILD_SHARED_LIBS})
+  elseif(NOT USE_SYSTEM_GOOGLE_BENCHMARK)
     add_subdirectory(deps/google-benchmark)
   endif()
   enable_testing()

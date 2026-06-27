@@ -26,6 +26,7 @@
 [![Node.js CI](https://github.com/BYVoid/OpenCC/actions/workflows/nodejs.yml/badge.svg)](https://github.com/BYVoid/OpenCC/actions/workflows/nodejs.yml)
 [![Python CI](https://github.com/BYVoid/OpenCC/actions/workflows/python.yml/badge.svg)](https://github.com/BYVoid/OpenCC/actions/workflows/python.yml)
 [![AppVeyor](https://img.shields.io/appveyor/ci/Carbo/OpenCC.svg)](https://ci.appveyor.com/project/Carbo/OpenCC)
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/frankslin/OpenCC?utm_source=badge)
 
 [![npm package badge](https://img.shields.io/npm/v/opencc)](https://www.npmjs.com/package/opencc)
 [![PyPI version](https://img.shields.io/pypi/v/opencc.svg)](https://pypi.org/project/opencc/)

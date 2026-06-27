@@ -1,0 +1,40 @@
+name: CodSpeed
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  # Allow CodSpeed to trigger benchmark runs manually (e.g. to backfill data).
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmarks:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for OpenID Connect authentication with CodSpeed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build benchmarks
+        run: |
+          cmake -S . -B build/perf \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DENABLE_GTEST=OFF \
+            -DENABLE_BENCHMARK=ON \
+            -DCODSPEED_MODE=simulation
+          cmake --build build/perf --target performance --parallel
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: bash scripts/run-codspeed-benchmarks.sh
