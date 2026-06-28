@@ -36,73 +36,27 @@ Algorithm overview (mirrors the C++ reference implementation):
     group/dict matcher.
 """
 
-import io
 import json
 import os
 import importlib.util
-import zipfile
-from pathlib import Path
 
 __all__ = ['OpenCC']
 
-_this_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Bundled resource zip (takes priority when present alongside the package).
-_pkg_resource_zip = os.path.join(_this_dir, 'opencc-resources.zip')
-
-# Legacy per-directory layout (kept for Bazel runfile and dev-tree fallback).
-_pkg_config_dir = os.path.join(_this_dir, 'config')
-_pkg_dict_dir = os.path.join(_this_dir, 'dictionary')
-_pkg_jieba_dict_dir = os.path.join(_this_dir, 'jieba_dict')
+_opencc_data = None
 
 
-_MAX_PARENT_TRAVERSAL_DEPTH = 8
-
-
-def _runfile_dir(relative_path: str) -> str:
-    runfiles_root = os.environ.get('RUNFILES_DIR')
-    workspace = os.environ.get('TEST_WORKSPACE', '_main')
-    if not runfiles_root:
-        return ''
-
-    for candidate in (
-            Path(runfiles_root) / workspace / relative_path,
-            Path(runfiles_root) / relative_path):
-        if candidate.is_dir():
-            return str(candidate)
-    return ''
-
-
-def _find_repo_root() -> str:
-    """
-    Walk up the directory tree to find the OpenCC repo root.
-
-    Detects the repo by the presence of ``data/config/`` and
-    ``data/dictionary/`` subdirectories.  Returns an empty string when the
-    repo root cannot be determined (e.g. in a standalone installed package
-    without bundled data files).
-    """
-    candidate = _this_dir
-    for _ in range(_MAX_PARENT_TRAVERSAL_DEPTH):
-        if (os.path.isdir(os.path.join(candidate, 'data', 'config')) and
-                os.path.isdir(os.path.join(candidate, 'data', 'dictionary'))):
-            return candidate
-        parent = os.path.dirname(candidate)
-        if parent == candidate:
-            break
-        candidate = parent
-    return ''
-
-
-_repo_root = _find_repo_root()
-_repo_config_dir = os.path.join(_repo_root, 'data', 'config') if _repo_root else ''
-_repo_dict_dir = os.path.join(_repo_root, 'data', 'dictionary') if _repo_root else ''
-_repo_jieba_config_dir = os.path.join(_repo_root, 'plugins', 'jieba', 'data', 'config') if _repo_root else ''
-_repo_jieba_dict_dir = os.path.join(_repo_root, 'plugins', 'jieba', 'deps', 'cppjieba', 'dict') if _repo_root else ''
-_runfiles_config_dir = _runfile_dir('data/config')
-_runfiles_dict_dir = _runfile_dir('data/dictionary')
-_runfiles_jieba_config_dir = _runfile_dir('plugins/jieba/data/config')
-_runfiles_jieba_dict_dir = _runfile_dir('plugins/jieba/deps/cppjieba/dict')
+def _get_opencc_data():
+    global _opencc_data
+    if _opencc_data is None:
+        try:
+            import opencc_data
+        except ImportError as exc:
+            raise ImportError(
+                'opencc-py pure Python resources are provided by the '
+                '`opencc-data` package. Install it with `pip install opencc-data`.'
+            ) from exc
+        _opencc_data = opencc_data
+    return _opencc_data
 
 
 # Trie
@@ -289,9 +243,6 @@ def _find_jieba_resource(raw_path: str,
         '',
         config_dir,
         os.path.dirname(config_dir) if config_dir else '',
-        _pkg_jieba_dict_dir,
-        _runfiles_jieba_dict_dir,
-        _repo_jieba_dict_dir,
     )
 
     seen = set()
@@ -312,51 +263,25 @@ def _find_jieba_resource(raw_path: str,
     return ''
 
 
-# Zip-backed resource loader
+# opencc-data resource helpers
 
-class _ZipLoader:
-    """Read configs and dicts from a flat OpenCC resource zip archive.
+def _data_resource(filename: str):
+    return _get_opencc_data().data_path(filename or None)
 
-    The zip produced by ``//data:opencc_resources_zip`` stores all ``.json``
-    and ``.txt`` files at the root level with no subdirectories.
-    """
 
-    __slots__ = ('_zf', '_zip_path', '_names')
+def _config_resource(filename: str):
+    return _get_opencc_data().config_path(filename or None)
 
-    def __init__(self, zip_path: str) -> None:
-        self._zip_path = zip_path
-        self._zf = zipfile.ZipFile(zip_path, 'r')
-        self._names: frozenset = frozenset(self._zf.namelist())
 
-    def has_txt(self, stem: str) -> bool:
-        return (stem + '.txt') in self._names
+def _resource_is_file(resource) -> bool:
+    try:
+        return resource.is_file()
+    except (FileNotFoundError, NotADirectoryError):
+        return False
 
-    def open_txt(self, stem: str):
-        """Return a text stream for ``stem.txt``."""
-        return io.TextIOWrapper(self._zf.open(stem + '.txt'), encoding='utf-8-sig')
 
-    def has_config(self, name: str) -> bool:
-        fname = name if name.endswith('.json') else name + '.json'
-        return fname in self._names
-
-    def read_config(self, name: str) -> dict:
-        fname = name if name.endswith('.json') else name + '.json'
-        return json.loads(self._zf.read(fname).decode('utf-8'))
-
-    def list_config_names(self) -> list:
-        return sorted(n for n in self._names if n.endswith('.json'))
-
-    def cache_key(self, stem: str, reverse: bool) -> tuple:
-        return (self._zip_path, stem, reverse)
-
-    def close(self) -> None:
-        self._zf.close()
-
-    def __del__(self) -> None:
-        try:
-            self._zf.close()
-        except Exception:
-            pass
+def _open_text_resource(resource):
+    return resource.open('r', encoding='utf-8-sig')
 
 
 # Dictionary loading
@@ -364,20 +289,18 @@ class _ZipLoader:
 _trie_cache: dict = {}  # cache_key -> _Trie
 
 
-def _find_dict_txt(filename: str, config_dir: str = '',
-                   zip_loader: '_ZipLoader | None' = None):
+def _find_dict_txt(filename: str, config_dir: str = ''):
     """
     Resolve a dictionary filename (typically ``Foo.ocd2``) to a
-    ``(name_or_path, needs_reverse)`` tuple.
-
-    When ``zip_loader`` is given, ``name_or_path`` is the bare stem (e.g.
-    ``'STPhrases'``) and all I/O goes through the zip.  Otherwise it is an
-    absolute filesystem path.
+    ``(source, needs_reverse)`` tuple. ``source`` is either a filesystem
+    path for custom/local dictionaries or a ``Traversable`` from
+    ``opencc-data`` for built-in dictionaries.
 
     Resolution order:
     1. Strip the extension (``Foo.ocd2`` → ``Foo``).
-    2. Zip lookup or filesystem search (config dir → pkg dir → runfiles → repo).
-    3. If the stem ends with ``Rev`` (e.g. ``HKVariantsRev``), look for
+    2. Search custom filesystem locations when a config directory is known.
+    3. Search ``opencc-data`` packaged dictionaries.
+    4. If the stem ends with ``Rev`` (e.g. ``HKVariantsRev``), look for
        the forward dict (``HKVariants``) and mark it for reversal.
     """
     stem = filename
@@ -386,26 +309,12 @@ def _find_dict_txt(filename: str, config_dir: str = '',
             stem = stem[: -len(ext)]
             break
 
-    if zip_loader is not None:
-        if zip_loader.has_txt(stem):
-            return stem, False
-        if stem.endswith('Rev'):
-            forward_stem = stem[:-3]
-            if zip_loader.has_txt(forward_stem):
-                return forward_stem, True
-        raise FileNotFoundError(f'Dictionary file not found in zip for: {filename!r}')
-
     if os.path.isabs(filename):
         path = stem + '.txt'
         if os.path.isfile(path):
             return path, False
 
-    search_dirs = (
-        config_dir,
-        _pkg_dict_dir,
-        _runfiles_dict_dir,
-        _repo_dict_dir,
-    )
+    search_dirs = (config_dir,)
 
     for search_dir in search_dirs:
         if not search_dir:
@@ -413,6 +322,10 @@ def _find_dict_txt(filename: str, config_dir: str = '',
         path = os.path.join(search_dir, stem + '.txt')
         if os.path.isfile(path):
             return path, False
+
+    resource = _data_resource(stem + '.txt')
+    if _resource_is_file(resource):
+        return resource, False
 
     # Try reversed dict: strip the trailing "Rev" and reverse the forward file.
     if stem.endswith('Rev'):
@@ -423,22 +336,21 @@ def _find_dict_txt(filename: str, config_dir: str = '',
             path = os.path.join(search_dir, forward_stem + '.txt')
             if os.path.isfile(path):
                 return path, True
+        resource = _data_resource(forward_stem + '.txt')
+        if _resource_is_file(resource):
+            return resource, True
 
     raise FileNotFoundError(f'Dictionary file not found for: {filename!r}')
 
 
-def _parse_dict_lines(name_or_path: str,
-                      zip_loader: '_ZipLoader | None' = None):
+def _parse_dict_lines(source):
     """
     Yield ``(key, candidates)`` tuples for every data line in a txt dict file.
-
-    When ``zip_loader`` is given, ``name_or_path`` is a bare stem read from
-    the zip; otherwise it is a filesystem path.
     """
-    if zip_loader is not None:
-        f = zip_loader.open_txt(name_or_path)
+    if isinstance(source, str):
+        f = open(source, encoding='utf-8-sig')
     else:
-        f = open(name_or_path, encoding='utf-8-sig')
+        f = _open_text_resource(source)
     with f:
         for line in f:
             line = line.strip()
@@ -450,8 +362,7 @@ def _parse_dict_lines(name_or_path: str,
                 yield key, candidates
 
 
-def _load_trie(name_or_path: str, reverse: bool,
-               zip_loader: '_ZipLoader | None' = None) -> _Trie:
+def _load_trie(source, reverse: bool) -> _Trie:
     """
     Load a ``key<TAB>value1 value2 ...`` txt file into a :class:`_Trie`.
 
@@ -461,10 +372,8 @@ def _load_trie(name_or_path: str, reverse: bool,
     encountered (in file order) wins, matching the behaviour of the C++
     dict-reversal script.
     """
-    if zip_loader is not None:
-        cache_key = zip_loader.cache_key(name_or_path, reverse)
-    else:
-        cache_key = (os.path.abspath(name_or_path), reverse)
+    cache_source = os.path.abspath(source) if isinstance(source, str) else str(source)
+    cache_key = (cache_source, reverse)
 
     cached = _trie_cache.get(cache_key)
     if cached is not None:
@@ -473,12 +382,12 @@ def _load_trie(name_or_path: str, reverse: bool,
     trie = _Trie()
 
     if not reverse:
-        for key, candidates in _parse_dict_lines(name_or_path, zip_loader):
+        for key, candidates in _parse_dict_lines(source):
             trie.add(key, candidates[0])
     else:
         # Reverse: each candidate value -> original key (first writer wins).
         reversed_mapping: dict = {}
-        for key, candidates in _parse_dict_lines(name_or_path, zip_loader):
+        for key, candidates in _parse_dict_lines(source):
             for candidate in candidates:
                 if candidate not in reversed_mapping:
                     reversed_mapping[candidate] = key
@@ -489,29 +398,15 @@ def _load_trie(name_or_path: str, reverse: bool,
     return trie
 
 
-def _get_trie(filename: str, config_dir: str = '',
-              zip_loader: '_ZipLoader | None' = None) -> _Trie:
-    """Resolve ``filename`` and return the loaded trie.
-
-    Tries the filesystem first (catches both source and Bazel runfile
-    locations), then falls back to the resource zip for generated files
-    that are not present in the source tree.
-    """
-    try:
-        fs_path, needs_reverse = _find_dict_txt(filename, config_dir, zip_loader=None)
-        return _load_trie(fs_path, needs_reverse, zip_loader=None)
-    except FileNotFoundError:
-        pass
-    if zip_loader is not None:
-        stem, needs_reverse = _find_dict_txt(filename, config_dir, zip_loader=zip_loader)
-        return _load_trie(stem, needs_reverse, zip_loader=zip_loader)
-    raise FileNotFoundError(f'Dictionary file not found for: {filename!r}')
+def _get_trie(filename: str, config_dir: str = '') -> _Trie:
+    """Resolve ``filename`` and return the loaded trie."""
+    source, needs_reverse = _find_dict_txt(filename, config_dir)
+    return _load_trie(source, needs_reverse)
 
 
 # Config parsing
 
 def _parse_dict_node(d: dict, config_dir: str = '',
-                     zip_loader: '_ZipLoader | None' = None,
                      include_tofu_risk_dicts: bool = True):
     """
     Recursively parse a JSON dict-config node.
@@ -527,7 +422,7 @@ def _parse_dict_node(d: dict, config_dir: str = '',
         policy = d.get('match_policy', 'short_circuit')
         matchers = [
             m for sub in d['dicts']
-            if (m := _parse_dict_node(sub, config_dir, zip_loader, include_tofu_risk_dicts)) is not None
+            if (m := _parse_dict_node(sub, config_dir, include_tofu_risk_dicts)) is not None
         ]
         if not matchers:
             return None
@@ -537,7 +432,7 @@ def _parse_dict_node(d: dict, config_dir: str = '',
         return None
 
     if dtype in ('ocd2', 'ocd', 'txt', 'text'):
-        return _get_trie(d['file'], config_dir, zip_loader)
+        return _get_trie(d['file'], config_dir)
 
     raise ValueError(f'Unknown dict type: {dtype!r}')
 
@@ -603,60 +498,22 @@ def _segment(text: str, matcher: _GroupMatcher) -> list:
 def _find_config(config_name: str) -> str:
     """
     Locate a config JSON file by name (with or without ``.json`` suffix).
-
-    Searches the bundled package config directory first, then the source-tree
-    ``data/config`` directory as a fallback.
     """
     filename = config_name if config_name.endswith('.json') else config_name + '.json'
-    for search_dir in (
-            _pkg_config_dir,
-            _runfiles_config_dir,
-            _repo_config_dir,
-            _runfiles_jieba_config_dir,
-            _repo_jieba_config_dir):
-        if not search_dir:
-            continue
-        path = os.path.join(search_dir, filename)
-        if os.path.isfile(path):
-            return path
+    resource = _config_resource(filename)
+    if _resource_is_file(resource):
+        return resource
     raise FileNotFoundError(f'Config not found: {config_name!r}')
-
-
-def _default_zip_loader() -> '_ZipLoader | None':
-    """Return a _ZipLoader for the bundled resource zip, or None."""
-    env_zip = os.environ.get('OPENCC_RESOURCE_ZIP', '')
-    if env_zip and os.path.isfile(env_zip):
-        return _ZipLoader(env_zip)
-    if os.path.isfile(_pkg_resource_zip):
-        return _ZipLoader(_pkg_resource_zip)
-    return None
 
 
 def _config_seg_type(cfg: dict) -> str:
     return cfg.get('segmentation', {}).get('type', '')
 
 
-def _config_uses_subdir_dicts(cfg: dict) -> bool:
-    """Return True if the config references any dict file under a subdirectory."""
-    def _check(value) -> bool:
-        if isinstance(value, dict):
-            for key, child in value.items():
-                if key == 'file' and isinstance(child, str) and '/' in child:
-                    return True
-                if _check(child):
-                    return True
-        elif isinstance(value, list):
-            for item in value:
-                if _check(item):
-                    return True
-        return False
-    return _check(cfg)
-
-
 def _is_supported_cfg(cfg: dict, config_path: str = '') -> bool:
     """Return True if the pure Python backend can use this parsed config."""
     seg_type = _config_seg_type(cfg)
-    if seg_type == 'mmseg':
+    if seg_type in ('', 'mmseg'):
         return True
     if seg_type == 'jieba':
         if not _jieba_available():
@@ -671,75 +528,23 @@ def _is_supported_cfg(cfg: dict, config_path: str = '') -> bool:
     return False
 
 
-def list_configs(resource_zip: 'str | None' = None) -> list:
+def list_configs() -> list:
     """
     Return a sorted list of ``.json`` config filenames available to the
-    pure Python converter.  Jieba configs are listed only when the optional
-    ``jieba`` package and dictionary data are available.
-
-    When ``resource_zip`` is given (or the package ships a bundled
-    ``opencc-resources.zip``), configs are enumerated from the zip.
+    pure Python converter.
     """
-    zip_loader: '_ZipLoader | None' = None
-    if resource_zip is not None:
-        zip_loader = _ZipLoader(resource_zip)
-    elif resource_zip is None:
-        zip_loader = _default_zip_loader()
-
-    if zip_loader is not None:
-        try:
-            configs = []
-            seen: set = set()
-            for name in zip_loader.list_config_names():
-                try:
-                    cfg = zip_loader.read_config(name)
-                    if _is_supported_cfg(cfg):
-                        configs.append(name)
-                        seen.add(name)
-                except Exception:
-                    pass
-            # Jieba configs are not bundled in the zip; scan filesystem.
-            for search_dir in (_runfiles_jieba_config_dir, _repo_jieba_config_dir):
-                if not search_dir or not os.path.isdir(search_dir):
-                    continue
-                for fname in sorted(os.listdir(search_dir)):
-                    if not fname.endswith('.json') or fname in seen:
-                        continue
-                    path = os.path.join(search_dir, fname)
-                    try:
-                        with open(path, encoding='utf-8') as f:
-                            cfg = json.load(f)
-                        if _is_supported_cfg(cfg, path) and not _config_uses_subdir_dicts(cfg):
-                            configs.append(fname)
-                            seen.add(fname)
-                    except Exception:
-                        pass
-            return sorted(configs)
-        finally:
-            zip_loader.close()
-
     configs = []
-    seen: set = set()
-    for search_dir in (
-            _pkg_config_dir,
-            _runfiles_config_dir,
-            _repo_config_dir,
-            _runfiles_jieba_config_dir,
-            _repo_jieba_config_dir):
-        if not search_dir or not os.path.isdir(search_dir):
+    config_dir = _config_resource('')
+    for resource in config_dir.iterdir():
+        name = resource.name
+        if not name.endswith('.json'):
             continue
-        for fname in os.listdir(search_dir):
-            if not fname.endswith('.json') or fname in seen:
-                continue
-            path = os.path.join(search_dir, fname)
-            try:
-                with open(path, encoding='utf-8') as f:
-                    cfg = json.load(f)
-                if _is_supported_cfg(cfg, path):
-                    configs.append(fname)
-                    seen.add(fname)
-            except Exception:
-                pass
+        try:
+            cfg = json.loads(resource.read_text(encoding='utf-8'))
+            if _is_supported_cfg(cfg):
+                configs.append(name)
+        except Exception:
+            pass
     return sorted(configs)
 
 
@@ -762,19 +567,17 @@ class OpenCC:
     def __init__(self, config: str = 't2s',
                  resource_zip: 'str | None' = None,
                  include_tofu_risk_dictionaries: bool = True) -> None:
+        if resource_zip is not None:
+            raise ValueError(
+                'resource_zip is no longer supported; install the opencc-data '
+                'package to provide built-in configs and dictionaries.'
+            )
+
         config_name = config[:-5] if config.endswith('.json') else config
         suffixed_config = config if config.endswith('.json') else f'{config}.json'
 
-        # Determine the active zip loader.
-        if resource_zip is not None:
-            zip_loader: '_ZipLoader | None' = _ZipLoader(resource_zip)
-        else:
-            zip_loader = _default_zip_loader()
-        self._zip_loader = zip_loader
-
         # Load the config JSON.
-        # Filesystem paths take priority over the zip so that custom configs
-        # and jieba plugin configs (not bundled in the zip) work correctly.
+        # Filesystem paths take priority so that custom configs work correctly.
         config_dir = ''
         if os.path.isfile(config):
             with open(config, encoding='utf-8') as f:
@@ -784,23 +587,17 @@ class OpenCC:
             with open(suffixed_config, encoding='utf-8') as f:
                 cfg = json.load(f)
             config_dir = os.path.dirname(os.path.abspath(suffixed_config))
-        elif zip_loader is not None and zip_loader.has_config(config_name):
-            cfg = zip_loader.read_config(config_name)
         else:
-            config_path = _find_config(config_name)
-            with open(config_path, encoding='utf-8') as f:
-                cfg = json.load(f)
-            config_dir = os.path.dirname(config_path)
+            config_resource = _find_config(config_name)
+            cfg = json.loads(config_resource.read_text(encoding='utf-8'))
 
         self.config = suffixed_config
 
         segmentation = cfg.get('segmentation', {})
         seg_type = segmentation.get('type', '')
         include_tofu = include_tofu_risk_dictionaries
-        # Dict loading always passes zip_loader as a fallback for generated files
-        # that are not present in the source tree (e.g. STPhrases_Generated…, TSCharactersExt).
         if seg_type == 'mmseg':
-            self._segmenter = _parse_dict_node(segmentation['dict'], config_dir, zip_loader, include_tofu)
+            self._segmenter = _parse_dict_node(segmentation['dict'], config_dir, include_tofu)
         elif seg_type == 'jieba':
             self._segmenter = _JiebaSegmenter(
                 segmentation.get('resources', {}),
@@ -816,12 +613,12 @@ class OpenCC:
 
         self._normalization: list = [
             m for step in cfg.get('normalization', [])
-            if (m := _parse_dict_node(step['dict'], config_dir, zip_loader, include_tofu)) is not None
+            if (m := _parse_dict_node(step['dict'], config_dir, include_tofu)) is not None
         ]
 
         self._chain: list = [
             m for step in cfg['conversion_chain']
-            if (m := _parse_dict_node(step['dict'], config_dir, zip_loader, include_tofu)) is not None
+            if (m := _parse_dict_node(step['dict'], config_dir, include_tofu)) is not None
         ]
 
     def convert(self, text: str) -> str:
