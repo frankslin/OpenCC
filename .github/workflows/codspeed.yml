@@ -5,6 +5,12 @@ on:
     branches: [master, opencc-wasm-develop, upstream-master]
   pull_request:
     branches: [master, opencc-wasm-develop, upstream-master]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or SHA to benchmark (merged on top of opencc-wasm-develop)'
+        required: true
+        default: 'upstream-master'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,7 +22,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: opencc-wasm-develop
           fetch-depth: 0
+
+      - name: Merge benchmark target
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git fetch origin ${{ inputs.ref }}
+          git merge FETCH_HEAD --no-edit
 
       - uses: bazel-contrib/setup-bazel@0.19.0
         with:
