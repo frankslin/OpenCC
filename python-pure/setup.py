@@ -1,18 +1,36 @@
 import os
+import re
 
 import setuptools
 
 _this_dir = os.path.dirname(os.path.abspath(__file__))
 
-_readme_file = os.path.join(_this_dir, 'README.md')
+_readme_files = (
+    os.path.join(_this_dir, 'README.md'),
+    os.path.join(_this_dir, 'README.zh-TW.md'),
+)
 OPENCC_DATA_VERSION = '1.3.2.dev20260628'
 
 
+def _read_readme_for_pkg_info(path):
+    with open(path, encoding='utf-8') as f:
+        content = f.read()
+    content = re.sub(
+        r'^\[(?:English version|繁體中文版)\]\([^)]+\)\n\n',
+        '',
+        content,
+        flags=re.MULTILINE,
+    )
+    return re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', content).strip()
+
+
 def get_long_description():
-    if not os.path.isfile(_readme_file):
-        return ''
-    with open(_readme_file, encoding='utf-8') as f:
-        return f.read()
+    parts = [
+        _read_readme_for_pkg_info(path)
+        for path in _readme_files
+        if os.path.isfile(path)
+    ]
+    return '\n\n---\n\n'.join(parts)
 
 
 setuptools.setup(
