@@ -32,7 +32,13 @@ looks for the corresponding `CustomPhrases.txt` next to the config file.
 
 ## Installation
 
-Install from this directory with pip:
+The PyPI package name is `opencc-py`. Users can install it with pip:
+
+```bash
+python -m pip install opencc-py
+```
+
+For local development from this directory:
 
 ```bash
 python -m pip install .
@@ -42,7 +48,7 @@ The package version matches its `opencc-data` version and declares the matching
 data package as an exact install dependency, so pip installs the compatible data
 package automatically.
 
-For editable development:
+Or use editable development mode:
 
 ```bash
 python -m pip install -e .

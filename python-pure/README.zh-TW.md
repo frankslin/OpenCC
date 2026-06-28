@@ -30,7 +30,13 @@ print(converter.convert("汉字"))  # 漢字
 
 ## 安裝
 
-在此目錄中使用 pip 安裝：
+PyPI package 名稱是 `opencc-py`。使用者可以透過 pip 安裝：
+
+```bash
+python -m pip install opencc-py
+```
+
+從此目錄進行本地開發安裝：
 
 ```bash
 python -m pip install .
@@ -39,7 +45,7 @@ python -m pip install .
 此 package 的版本會與 `opencc-data` 版本一致，並將相同版本的資料 package
 宣告為精確安裝依賴，因此 pip 會自動安裝相容的資料 package。
 
-開發時可使用 editable 安裝：
+也可以使用 editable development mode：
 
 ```bash
 python -m pip install -e .
