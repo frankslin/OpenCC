@@ -64,7 +64,9 @@ def test_jieba_configs_match_plugin_comparison_cases():
         for cfg, ans in case.get('expected', {}).items():
             if not cfg.endswith('_jieba'):
                 continue
-            converter = opencc.OpenCC(f'{cfg}.json')
+            # Jieba comparison testcases record CLI golden outputs, which skip
+            # tofu-risk dictionaries by default (same as --include-tofu-risk-dictionaries=false).
+            converter = opencc.OpenCC(f'{cfg}.json', include_tofu_risk_dictionaries=False)
             assert converter.convert(case['input']) == ans, \
                 'Failed to convert {} for {} -> {}'.format(cfg, case['input'], ans)
 

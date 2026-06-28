@@ -511,21 +511,30 @@ def _get_trie(filename: str, config_dir: str = '',
 # Config parsing
 
 def _parse_dict_node(d: dict, config_dir: str = '',
-                     zip_loader: '_ZipLoader | None' = None):
+                     zip_loader: '_ZipLoader | None' = None,
+                     include_tofu_risk_dicts: bool = True):
     """
     Recursively parse a JSON dict-config node.
 
-    Returns a :class:`_Trie` for leaf nodes or a :class:`_GroupMatcher` for
-    group nodes, preserving the ``match_policy`` (``short_circuit`` or
-    ``union``) specified in the config.  Mirrors ``ConfigInternal::ParseDict``
-    in ``Config.cpp``.
+    Returns a :class:`_Trie` for leaf nodes, a :class:`_GroupMatcher` for
+    group nodes, or ``None`` when a dict is suppressed because
+    ``may_output_tofu`` is true and ``include_tofu_risk_dicts`` is false.
+    Mirrors ``ConfigInternal::ParseDict`` in ``Config.cpp``.
     """
     dtype = d['type']
 
     if dtype == 'group':
         policy = d.get('match_policy', 'short_circuit')
-        matchers = [_parse_dict_node(sub, config_dir, zip_loader) for sub in d['dicts']]
+        matchers = [
+            m for sub in d['dicts']
+            if (m := _parse_dict_node(sub, config_dir, zip_loader, include_tofu_risk_dicts)) is not None
+        ]
+        if not matchers:
+            return None
         return _GroupMatcher(matchers, policy=policy)
+
+    if d.get('may_output_tofu', False) and not include_tofu_risk_dicts:
+        return None
 
     if dtype in ('ocd2', 'ocd', 'txt', 'text'):
         return _get_trie(d['file'], config_dir, zip_loader)
@@ -751,7 +760,8 @@ class OpenCC:
     """
 
     def __init__(self, config: str = 't2s',
-                 resource_zip: 'str | None' = None) -> None:
+                 resource_zip: 'str | None' = None,
+                 include_tofu_risk_dictionaries: bool = True) -> None:
         config_name = config[:-5] if config.endswith('.json') else config
         suffixed_config = config if config.endswith('.json') else f'{config}.json'
 
@@ -786,10 +796,11 @@ class OpenCC:
 
         segmentation = cfg.get('segmentation', {})
         seg_type = segmentation.get('type', '')
+        include_tofu = include_tofu_risk_dictionaries
         # Dict loading always passes zip_loader as a fallback for generated files
         # that are not present in the source tree (e.g. STPhrases_Generated…, TSCharactersExt).
         if seg_type == 'mmseg':
-            self._segmenter = _parse_dict_node(segmentation['dict'], config_dir, zip_loader)
+            self._segmenter = _parse_dict_node(segmentation['dict'], config_dir, zip_loader, include_tofu)
         elif seg_type == 'jieba':
             self._segmenter = _JiebaSegmenter(
                 segmentation.get('resources', {}),
@@ -804,13 +815,13 @@ class OpenCC:
             )
 
         self._normalization: list = [
-            _parse_dict_node(step['dict'], config_dir, zip_loader)
-            for step in cfg.get('normalization', [])
+            m for step in cfg.get('normalization', [])
+            if (m := _parse_dict_node(step['dict'], config_dir, zip_loader, include_tofu)) is not None
         ]
 
         self._chain: list = [
-            _parse_dict_node(step['dict'], config_dir, zip_loader)
-            for step in cfg['conversion_chain']
+            m for step in cfg['conversion_chain']
+            if (m := _parse_dict_node(step['dict'], config_dir, zip_loader, include_tofu)) is not None
         ]
 
     def convert(self, text: str) -> str:
