@@ -16,6 +16,17 @@ opencc_resources_zip(
     out = "opencc-resources.zip",
 )
 
+opencc_resources_zip(
+    name = "opencc_py_resources_zip",
+    configs = ["//data/config:config"],
+    dicts = [
+        "//data/dictionary:text_dictionaries",
+        "//data/dictionary:CJK_Compatibility_Ideographs.txt",
+    ],
+    exclude_dict_subdirs = True,
+    out = "opencc-py-resources.zip",
+)
+
 opencc_resources_ocd2_zip(
     name = "opencc_resources_ocd2_zip",
     src = ":opencc_resources_zip",

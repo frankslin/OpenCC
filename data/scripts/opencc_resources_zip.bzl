@@ -6,6 +6,8 @@ def _opencc_resources_zip_impl(ctx):
     args.add("--volatile-status", ctx.version_file)
     args.add_all("--configs", ctx.files.configs)
     args.add_all("--dicts", ctx.files.dicts)
+    if ctx.attr.exclude_dict_subdirs:
+        args.add("--exclude-dict-subdirs")
 
     ctx.actions.run(
         executable = ctx.executable.tool,
@@ -25,6 +27,7 @@ opencc_resources_zip = rule(
     attrs = {
         "configs": attr.label_list(allow_files = True, mandatory = True),
         "dicts": attr.label_list(allow_files = True, mandatory = True),
+        "exclude_dict_subdirs": attr.bool(default = False),
         "source_url": attr.string(default = "https://github.com/BYVoid/OpenCC"),
         "tool": attr.label(
             default = Label("//data/scripts:opencc_resources_zip"),

@@ -24,6 +24,12 @@ def parse_args():
     parser.add_argument("--source-url", default=DEFAULT_SOURCE_URL)
     parser.add_argument("--stable-status")
     parser.add_argument("--volatile-status")
+    parser.add_argument(
+        "--exclude-dict-subdirs",
+        action="store_true",
+        default=False,
+        help="Skip dict files stored under a subdirectory (e.g. cngov/).",
+    )
     return parser.parse_args()
 
 
@@ -146,6 +152,21 @@ def convert_dict_references(value):
     return value
 
 
+def config_references_subdir_dict(value):
+    """Return True if the config JSON references any dict file under a subdirectory."""
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "file" and isinstance(child, str) and "/" in child:
+                return True
+            if config_references_subdir_dict(child):
+                return True
+    elif isinstance(value, list):
+        for item in value:
+            if config_references_subdir_dict(item):
+                return True
+    return False
+
+
 def read_text_config(path):
     with open(path, encoding="utf-8") as file:
         config = json.load(file)
@@ -172,11 +193,28 @@ def write_entry(archive, name, content, date_time):
 
 
 def add_entry(archive, entries, name, content, date_time):
+    if name in entries:
+        return
     write_entry(archive, name, content, date_time)
     entries[name] = {
         "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
         "size": len(content.encode("utf-8")),
     }
+
+
+def dict_zip_name(path):
+    """Return the name for a dict file inside the zip archive.
+
+    Preserves subdirectory components relative to the nearest 'dictionary'
+    ancestor so that files in subdirectories (e.g. cngov/STCharacters.txt)
+    are stored with their subpath and do not collide with top-level files
+    of the same basename.
+    """
+    parts = path.replace("\\", "/").split("/")
+    for i in range(len(parts) - 2, -1, -1):
+        if parts[i] == "dictionary":
+            return "/".join(parts[i + 1 :])
+    return os.path.basename(path)
 
 
 def main():
@@ -188,6 +226,11 @@ def main():
     with zipfile.ZipFile(args.output, "w") as archive:
         entries = {}
         for path in sorted(args.configs, key=os.path.basename):
+            if args.exclude_dict_subdirs:
+                with open(path, encoding="utf-8") as f:
+                    raw_cfg = json.load(f)
+                if config_references_subdir_dict(raw_cfg):
+                    continue
             add_entry(
                 archive,
                 entries,
@@ -195,11 +238,14 @@ def main():
                 read_text_config(path),
                 date_time,
             )
-        for path in sorted(args.dicts, key=os.path.basename):
+        for path in sorted(args.dicts, key=dict_zip_name):
+            name = dict_zip_name(path)
+            if args.exclude_dict_subdirs and "/" in name:
+                continue
             add_entry(
                 archive,
                 entries,
-                os.path.basename(path),
+                name,
                 read_clean_dictionary(path),
                 date_time,
             )
