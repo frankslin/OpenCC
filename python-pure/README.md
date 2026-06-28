@@ -1,4 +1,4 @@
-# OpenCC Pure Python
+# opencc-py (OpenCC Pure Python Implementation)
 
 [繁體中文版](README.zh-TW.md)
 
@@ -88,7 +88,8 @@ The tests verify:
 
 This package intentionally implements only the pieces needed for pure Python
 text conversion. Compared with the official C++ library and command-line tools,
-it omits several lower-level details:
+it omits several lower-level details. The official Python implementation is the
+[`opencc` PyPI package](https://pypi.org/project/opencc/).
 
 - binary dictionary loading for `.ocd2`/`.ocd`; built-in dictionaries are read
   from `.txt` data supplied by `opencc-data`

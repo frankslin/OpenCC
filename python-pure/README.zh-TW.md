@@ -1,4 +1,4 @@
-# OpenCC Pure Python
+# opencc-py (OpenCC 純 Python 實作)
 
 [English version](README.md)
 
@@ -83,7 +83,8 @@ PYTHONPATH=python-pure python -m pytest python-pure/tests
 ## 與官方實作的差異
 
 此 package 刻意只實作純 Python 文字轉換所需的部分。相較於官方 C++ library
-與 command-line tools，它省略了幾個較底層的實作細節：
+與 command-line tools，它省略了幾個較底層的實作細節。官方 Python 實作是 PyPI
+上的 [`opencc` package](https://pypi.org/project/opencc/)。
 
 - `.ocd2` / `.ocd` 二進位 dictionary 載入；內建 dictionary 會讀取
   `opencc-data` 提供的 `.txt` 資料
