@@ -165,6 +165,9 @@ async function ensureConfig(configName) {
 
   const dicts = new Set();
   const resources = new Set();
+  if (Array.isArray(cfgJson.normalization)) {
+    cfgJson.normalization.forEach((item) => collectOcd2Files(item?.dict, dicts));
+  }
   collectOcd2Files(cfgJson.segmentation?.dict, dicts);
   collectSegmentationResources(cfgJson.segmentation, resources);
   if (Array.isArray(cfgJson.conversion_chain)) {
@@ -198,6 +201,9 @@ async function ensureConfig(configName) {
       node.dicts.forEach(patchPaths);
     }
   };
+  if (Array.isArray(cfgJson.normalization)) {
+    cfgJson.normalization.forEach((item) => patchPaths(item?.dict));
+  }
   patchPaths(cfgJson.segmentation?.dict);
   if (Array.isArray(cfgJson.conversion_chain)) {
     cfgJson.conversion_chain.forEach((item) => patchPaths(item?.dict));
