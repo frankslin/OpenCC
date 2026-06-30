@@ -30,7 +30,7 @@ WebAssembly port of OpenCC (Open Chinese Convert) with full API compatibility. B
 ```html
 <script type="module">
   // 1. Import from CDN
-  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.9.0/dist/esm/index.js";
+  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.10.0/dist/esm/index.js";
 
   // 2. Create converter (auto-downloads everything!)
   const converter = OpenCC.Converter({ config: "s2twp" });
@@ -429,6 +429,15 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 - Performance: Focuses on fidelity and compatibility with official OpenCC. May be slower than pure-JS implementations for raw throughput, but guarantees full OpenCC behavior.
 
 ## 📜 Changelog
+
+### 0.10.0 - 2026-06-29
+
+- Aligned bundled assets with **OpenCC 1.3.2** (configs now include a `normalization` step and the `STPhrases_GeneratedFromRegionalPhrases` dictionary)
+- Updated CN Government Standard dictionaries to `80a8b40` (additional non-standard variant characters from 《古代汉语词典》第3版)
+- Fixed normalization dict loading: ocd2 files in the `normalization` array are now mounted into the WASM VFS before `opencc_create` is called (previously `s2twp`, `s2hkp`, and similar configs threw a file-not-found error)
+- Fixed build: added `SingleStageConverter.cpp` and `PipelineConverter.cpp` to the Emscripten source list after the upstream `Converter` split
+- `converter.inspect()` now returns `pipelineStages` and always populates top-level `segments` from the last pipeline stage
+- TypeScript: `InspectionResult` gains optional `pipelineStages?: InspectionResult[]`
 
 ### 0.9.0 - 2026-06-15
 

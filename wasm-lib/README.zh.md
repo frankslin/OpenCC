@@ -30,7 +30,7 @@ OpenCC（Open Chinese Convert）的 WebAssembly 移植版本，完全相容原�
 ```html
 <script type="module">
   // 1. 從 CDN 匯入
-  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.9.0/dist/esm/index.js";
+  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.10.0/dist/esm/index.js";
 
   // 2. 建立轉換器（自動下載所有資源！）
   const converter = OpenCC.Converter({ config: "s2twp" });
@@ -429,6 +429,15 @@ A：首次載入需要下載設定檔和字典檔（約 1-2MB）。後續轉換�
 - 效能：專注於精確度和與官方 OpenCC 的相容性。原始吞吐量可能比純 JavaScript 實作慢，但保證完整的 OpenCC 行為。
 
 ## 📜 變更歷史
+
+### 0.10.0 - 2026-06-29
+
+- 將隨附資源對齊 **OpenCC 1.3.2**（設定檔新增 `normalization` 預處理步驟，並隨附 `STPhrases_GeneratedFromRegionalPhrases` 詞典）
+- 大陸政府標準詞典更新到 `80a8b40`（新增來自《古代漢語詞典》第3版的表外異體字）
+- 修正 normalization 詞典載入問題：`normalization` 陣列中引用的 ocd2 檔案現在會在呼叫 `opencc_create` 前掛載到 WASM VFS（舊版對 `s2twp`、`s2hkp` 等設定會丟出找不到檔案的錯誤）
+- 修正 build：在 Emscripten 來源清單中補上 `SingleStageConverter.cpp` 和 `PipelineConverter.cpp`（上游將 `Converter` 拆分後必要）
+- `converter.inspect()` 現在會回傳 `pipelineStages`，並始終從最末 pipeline stage 的 segments 填充頂層 `segments` 欄位
+- TypeScript：`InspectionResult` 新增選用欄位 `pipelineStages?: InspectionResult[]`
 
 ### 0.9.0 - 2026-06-15
 
