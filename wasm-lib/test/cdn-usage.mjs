@@ -57,6 +57,9 @@ try {
       node.dicts.forEach(collectOcd2Files);
     }
   }
+  if (Array.isArray(configJson.normalization)) {
+    configJson.normalization.forEach(item => collectOcd2Files(item?.dict));
+  }
   collectOcd2Files(configJson.segmentation?.dict);
   if (Array.isArray(configJson.conversion_chain)) {
     configJson.conversion_chain.forEach(item => collectOcd2Files(item?.dict));
@@ -81,6 +84,9 @@ try {
     if (node.type === "group" && Array.isArray(node.dicts)) {
       node.dicts.forEach(patchPaths);
     }
+  }
+  if (Array.isArray(configJson.normalization)) {
+    configJson.normalization.forEach(item => patchPaths(item?.dict));
   }
   patchPaths(configJson.segmentation?.dict);
   if (Array.isArray(configJson.conversion_chain)) {

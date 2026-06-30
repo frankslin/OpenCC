@@ -1,13 +1,13 @@
 {
   "name": "Traditional Chinese (OpenCC Standard) to Simplified Chinese",
-  "segmentation": {
-    "type": "mmseg",
-    "dict": { "type": "ocd2", "file": "TSPhrases.ocd2" }
-  },
+  "normalization": [
+    { "dict": { "type": "ocd2", "file": "CJK_Compatibility_Ideographs.ocd2" } }
+  ],
   "conversion_chain": [
     {
       "dict": {
         "type": "group",
+        "match_policy": "short_circuit",
         "dicts": [
           { "type": "ocd2", "file": "TSPhrases.ocd2" },
           {
