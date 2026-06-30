@@ -38,7 +38,30 @@ Algorithm overview (mirrors the C++ reference implementation):
 
 import json
 import os
+import re
 import importlib.util
+
+# Two-pass approach (mirrors node/opencc.js parseJSON logic but split into two
+# steps so that "value", // comment\n} correctly strips the trailing comma even
+# when a comment sits between the comma and the closing bracket on the same line).
+#
+# Pass 1 pattern: strip // and /* */ comments outside string literals.
+# Pass 2 pattern: strip trailing commas (,<ws>} or ,<ws>]) outside strings.
+# Both use the alternation trick: unmatched string literals are passed through;
+# only the capture group (comment / trailing comma) is replaced with ''.
+_COMMENT_RE = re.compile(r'"(?:[^"\\]|\\.)*"|(//[^\n]*|/\*[\s\S]*?\*/)')
+_TRAILING_COMMA_RE = re.compile(r'"(?:[^"\\]|\\.)*"|(,\s*(?=[}\]]))')
+
+
+def _strip_jsonc(text: str) -> str:
+    def _drop_group1(m):
+        return '' if m.group(1) else m.group(0)
+    text = _COMMENT_RE.sub(_drop_group1, text)
+    return _TRAILING_COMMA_RE.sub(_drop_group1, text)
+
+
+def _load_jsonc(text: str):
+    return json.loads(_strip_jsonc(text))
 
 __all__ = ['OpenCC']
 
@@ -434,6 +457,13 @@ def _parse_dict_node(d: dict, config_dir: str = '',
     if dtype in ('ocd2', 'ocd', 'txt', 'text'):
         return _get_trie(d['file'], config_dir)
 
+    if dtype == 'inline':
+        trie = _Trie()
+        for key, value in d['entries'].items():
+            if key and value:
+                trie.add(key, value)
+        return trie
+
     raise ValueError(f'Unknown dict type: {dtype!r}')
 
 
@@ -540,7 +570,7 @@ def list_configs() -> list:
         if not name.endswith('.json'):
             continue
         try:
-            cfg = json.loads(resource.read_text(encoding='utf-8'))
+            cfg = _load_jsonc(resource.read_text(encoding='utf-8'))
             if _is_supported_cfg(cfg):
                 configs.append(name)
         except Exception:
@@ -581,15 +611,15 @@ class OpenCC:
         config_dir = ''
         if os.path.isfile(config):
             with open(config, encoding='utf-8') as f:
-                cfg = json.load(f)
+                cfg = _load_jsonc(f.read())
             config_dir = os.path.dirname(os.path.abspath(config))
         elif os.path.isfile(suffixed_config):
             with open(suffixed_config, encoding='utf-8') as f:
-                cfg = json.load(f)
+                cfg = _load_jsonc(f.read())
             config_dir = os.path.dirname(os.path.abspath(suffixed_config))
         else:
             config_resource = _find_config(config_name)
-            cfg = json.loads(config_resource.read_text(encoding='utf-8'))
+            cfg = _load_jsonc(config_resource.read_text(encoding='utf-8'))
 
         self.config = suffixed_config
 
