@@ -12,6 +12,7 @@ permissions:
 jobs:
   build-package-publish:
     runs-on: ubuntu-latest
+    environment: npm
     defaults:
       run:
         working-directory: wasm-lib
