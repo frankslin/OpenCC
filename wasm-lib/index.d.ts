@@ -39,6 +39,7 @@ export interface InspectionResult {
   input: string;
   segments: string[];
   stages: InspectionStage[];
+  pipelineStages?: InspectionResult[];
   output: string;
 }
 
