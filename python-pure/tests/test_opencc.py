@@ -112,5 +112,64 @@ def test_conversion():
                 'Failed to convert {} for {} -> {}'.format(cfg, input_text, ans)
 
 
+def test_inline_dictionary(tmp_path):
+    import opencc
+
+    config_path = tmp_path / 'inline_test.json'
+    config_path.write_text(json.dumps({
+        'name': 'InlineTest',
+        'conversion_chain': [{
+            'dict': {
+                'type': 'inline',
+                'entries': {
+                    '汉字': '漢字',
+                    '测试': '測試',
+                },
+            },
+        }],
+    }), encoding='utf-8')
+
+    converter = opencc.OpenCC(str(config_path))
+    assert converter.convert('汉字测试') == '漢字測試'
+    assert converter.convert('hello') == 'hello'
+
+
+def test_jsonc_config_with_comments(tmp_path):
+    import opencc
+
+    config_path = tmp_path / 'jsonc_test.json'
+    config_path.write_text(
+        '// This is a JSONC config\n'
+        '{\n'
+        '  /* block comment */\n'
+        '  "name": "JsoncTest",\n'
+        '  "conversion_chain": [{\n'
+        '    "dict": {\n'
+        '      "type": "inline",\n'
+        '      "entries": {\n'
+        '        "简体": "繁體", // trailing comma\n'
+        '      }\n'
+        '    },\n'
+        '  }],\n'
+        '}\n',
+        encoding='utf-8',
+    )
+
+    converter = opencc.OpenCC(str(config_path))
+    assert converter.convert('简体') == '繁體'
+
+
+def test_strip_jsonc():
+    from opencc._opencc_pure import _strip_jsonc
+
+    assert _strip_jsonc('{"a": 1} // comment') == '{"a": 1} '
+    assert _strip_jsonc('{"a": "// not a comment"}') == '{"a": "// not a comment"}'
+    assert _strip_jsonc('{"a": /* block */ 1}') == '{"a":  1}'
+    assert _strip_jsonc('{"url": "http://example.com"}') == '{"url": "http://example.com"}'
+    assert _strip_jsonc('{"a": 1,}') == '{"a": 1}'
+    assert _strip_jsonc('{"a": [1, 2,]}') == '{"a": [1, 2]}'
+    assert _strip_jsonc('{"a": ",}"}') == '{"a": ",}"}'
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main(sys.argv[1:]))
