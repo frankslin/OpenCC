@@ -80,6 +80,25 @@ PYTHONPATH=python-pure python -m pytest python-pure/tests
 - 自訂 config 與本地 dictionary 解析
 - 支援 configs 的 golden output 相容性
 
+## OpenCC 1.3.2 功能支援狀況
+
+以下 OpenCC 1.3.2 功能已完整支援：
+
+- **CJK 相容表意文字正規化** — 所有內建 config 均包含正規化前處理步驟，
+  在轉換前先將 U+F900–U+FAFF 區塊字元映射至標準碼位。
+- **`match_policy: union`** — 使用 `"match_policy": "union"` 的 dictionary
+  group 會取所有子 dictionary 中最長的前綴命中。
+- **`normalization` config 欄位** — 自訂 config 可加入 `normalization` 陣列，
+  在 segmentation 前插入正規化步驟。
+- **新 configs** — `s2hkp` 與 `hk2sp`（簡體 ↔ 香港繁體，含詞組轉換）
+  透過 `opencc-data` 提供。
+- **Tofu-risk dictionary 停用** — 建構 `OpenCC()` 時傳入
+  `include_tofu_risk_dictionaries=False` 可停用可能輸出現代字型缺字的 dictionary。
+- **JSONC** — config 檔案支援 `//` 行注釋與 `/* */` 區塊注釋；純 Python
+  後端在解析 JSON 前會先剝除注釋。
+- **Inline dictionary** — 自訂 config 支援 `{"type": "inline", "entries":
+  {"key": "value", ...}}` 節點。
+
 ## 與官方實作的差異
 
 此 package 刻意只實作純 Python 文字轉換所需的部分。相較於官方 C++ library

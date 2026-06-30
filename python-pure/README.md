@@ -84,6 +84,27 @@ The tests verify:
 - custom config and local dictionary resolution
 - golden output compatibility for supported configs
 
+## OpenCC 1.3.2 Feature Coverage
+
+The following OpenCC 1.3.2 features are fully supported:
+
+- **CJK Compatibility Ideographs normalization** — all built-in configs include
+  a pre-processing normalization step that maps U+F900–U+FAFF characters to
+  their canonical code points before conversion.
+- **`match_policy: union`** — dictionary groups with `"match_policy": "union"`
+  return the globally longest match across all sub-dictionaries.
+- **`normalization` config field** — custom configs may add a `normalization`
+  array to apply conversion steps before segmentation.
+- **New configs** — `s2hkp` and `hk2sp` (Simplified ↔ Hong Kong, with phrase
+  conversion) are available through `opencc-data`.
+- **Tofu-risk dictionary suppression** — pass
+  `include_tofu_risk_dictionaries=False` to `OpenCC()` to exclude dictionaries
+  that may produce characters absent from modern CJK fonts.
+- **JSONC** — config files may use `//` line comments and `/* */` block
+  comments; the pure Python backend strips them before JSON parsing.
+- **Inline dictionaries** — `{"type": "inline", "entries": {"key": "value",
+  ...}}` dict nodes are supported in custom configs.
+
 ## Differences from the Official Implementation
 
 This package intentionally implements only the pieces needed for pure Python
