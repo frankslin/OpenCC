@@ -5,6 +5,15 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-06-29
+
+- **Upstream alignment**: Bundled assets now track OpenCC **1.3.2** (`ver.1.3.2`). Configs gain a `normalization` pre-processing step (CJK Compatibility Ideographs normalisation) and the new `STPhrases_GeneratedFromRegionalPhrases` dictionary.
+- **CN Government Standard dictionary sync**: Updated bundled cngov dictionaries to `80a8b40` (adds a batch of non-standard variant characters sourced from 《古代汉语词典》第3版).
+- **Build fix**: Added `SingleStageConverter.cpp` and `PipelineConverter.cpp` to the Emscripten source list (required after `Converter` was split into two concrete subclasses in 1.3.2).
+- **Normalization dict loading fix**: `index.js` and the CJS shim now collect and VFS-mount ocd2 files referenced in the `normalization` array before calling `opencc_create`; previously those configs (`s2twp`, `s2hkp`, …) threw a file-not-found error at runtime.
+- **Inspect API – pipelineStages**: `opencc_inspect` now serialises `pipelineStages` for `PipelineConverter` results and promotes the last stage's `segments` to the top-level `segments` key, so callers can always read segmentation output from `result.segments` regardless of converter topology.
+- **TypeScript**: `InspectionResult` gains an optional `pipelineStages?: InspectionResult[]` field.
+
 ## [0.9.0] - 2026-06-15
 
 - **Upstream alignment**: Bundled assets now track OpenCC upstream commit `71964afa6c7f`.
