@@ -72,6 +72,60 @@ const char* opencc_convert(int handle, const char* input) {
 #endif
 }
 
+static void writeInspectionResult(
+    rapidjson::Writer<rapidjson::StringBuffer>& writer,
+    const opencc::ConversionInspectionResult& result,
+    bool topLevel) {
+  writer.StartObject();
+  writer.Key("input");
+  writer.String(result.input.data(),
+                static_cast<rapidjson::SizeType>(result.input.size()));
+
+  // For the top-level object, if this is a pipeline result (segments empty
+  // but pipelineStages non-empty), expose the last stage's segments so
+  // callers can always read segments from the top-level "segments" key.
+  const std::vector<std::string>* segsToWrite = &result.segments;
+  if (topLevel && result.segments.empty() && !result.pipelineStages.empty()) {
+    segsToWrite = &result.pipelineStages.back().segments;
+  }
+  writer.Key("segments");
+  writer.StartArray();
+  for (const auto& seg : *segsToWrite) {
+    writer.String(seg.data(), static_cast<rapidjson::SizeType>(seg.size()));
+  }
+  writer.EndArray();
+
+  writer.Key("stages");
+  writer.StartArray();
+  for (const auto& stage : result.stages) {
+    writer.StartObject();
+    writer.Key("index");
+    writer.Uint64(stage.index);
+    writer.Key("segments");
+    writer.StartArray();
+    for (const auto& seg : stage.segments) {
+      writer.String(seg.data(), static_cast<rapidjson::SizeType>(seg.size()));
+    }
+    writer.EndArray();
+    writer.EndObject();
+  }
+  writer.EndArray();
+
+  if (!result.pipelineStages.empty()) {
+    writer.Key("pipelineStages");
+    writer.StartArray();
+    for (const auto& ps : result.pipelineStages) {
+      writeInspectionResult(writer, ps, false);
+    }
+    writer.EndArray();
+  }
+
+  writer.Key("output");
+  writer.String(result.output.data(),
+                static_cast<rapidjson::SizeType>(result.output.size()));
+  writer.EndObject();
+}
+
 const char* opencc_inspect(int handle, const char* input) {
 #ifdef OPENCC_WASM_WITH_OPENCC
   if (input == nullptr) {
@@ -86,37 +140,7 @@ const char* opencc_inspect(int handle, const char* input) {
         it->second.simple->Inspect(input);
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    writer.StartObject();
-    writer.Key("input");
-    writer.String(result.input.data(),
-                  static_cast<rapidjson::SizeType>(result.input.size()));
-    writer.Key("segments");
-    writer.StartArray();
-    for (const auto& segment : result.segments) {
-      writer.String(segment.data(),
-                    static_cast<rapidjson::SizeType>(segment.size()));
-    }
-    writer.EndArray();
-    writer.Key("stages");
-    writer.StartArray();
-    for (const auto& stage : result.stages) {
-      writer.StartObject();
-      writer.Key("index");
-      writer.Uint64(stage.index);
-      writer.Key("segments");
-      writer.StartArray();
-      for (const auto& segment : stage.segments) {
-        writer.String(segment.data(),
-                      static_cast<rapidjson::SizeType>(segment.size()));
-      }
-      writer.EndArray();
-      writer.EndObject();
-    }
-    writer.EndArray();
-    writer.Key("output");
-    writer.String(result.output.data(),
-                  static_cast<rapidjson::SizeType>(result.output.size()));
-    writer.EndObject();
+    writeInspectionResult(writer, result, true);
     it->second.inspect_json.assign(buffer.GetString(), buffer.GetSize());
     return it->second.inspect_json.c_str();
   } catch (const std::exception& ex) {
