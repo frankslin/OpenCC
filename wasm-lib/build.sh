@@ -19,6 +19,7 @@ OPENCC_SRCS=(
   ${OPENCC_SRC_DIR}/src/Conversion.cpp
   ${OPENCC_SRC_DIR}/src/ConversionChain.cpp
   ${OPENCC_SRC_DIR}/src/Converter.cpp
+  ${OPENCC_SRC_DIR}/src/DartsDict.cpp
   ${OPENCC_SRC_DIR}/src/SingleStageConverter.cpp
   ${OPENCC_SRC_DIR}/src/PipelineConverter.cpp
   ${OPENCC_SRC_DIR}/src/Dict.cpp
@@ -67,6 +68,7 @@ INCLUDE_FLAGS=(
   -I${MARISA_DIR}/include
   -I${MARISA_DIR}/lib
   -I${OPENCC_SRC_DIR}/deps/rapidjson-1.1.0
+  -I${OPENCC_SRC_DIR}/deps/darts-clone-0.32h/include
 )
 
 # 编译选项：

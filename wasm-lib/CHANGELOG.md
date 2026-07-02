@@ -5,6 +5,13 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-07-02
+
+- **Upstream alignment**: Bundled assets now track OpenCC **1.4.0** (`ver.1.4.0`), and the WASM binary is rebuilt against the 1.4.0 source set.
+- **CN Government Standard dictionary sync**: Updated bundled cngov dictionaries to `Transformer(1.3.8)` (`529a920`) and refreshed cngov configs, `.ocd2` assets, and tests.
+- **Build compatibility**: Added `DartsDict.cpp` and the Darts include path to the Emscripten source list, matching 1.4.0 `Config.cpp` linkage.
+- **Asset refresh fix**: WASM config rewriting now converts root-level text dictionary references such as `CJK_Compatibility_Ideographs.txt` to bundled `.ocd2` files.
+
 ## [0.10.0] - 2026-06-29
 
 - **Upstream alignment**: Bundled assets now track OpenCC **1.3.2** (`ver.1.3.2`). Configs gain a `normalization` pre-processing step (CJK Compatibility Ideographs normalisation) and the new `STPhrases_GeneratedFromRegionalPhrases` dictionary.
@@ -186,6 +193,8 @@ If you were importing the WASM module directly (not the high-level API), no chan
 
 ---
 
+[0.11.0]: https://github.com/frankslin/OpenCC/compare/opencc-wasm-v0.10.0...opencc-wasm-v0.11.0
+[0.10.0]: https://github.com/frankslin/OpenCC/compare/opencc-wasm-v0.9.0...opencc-wasm-v0.10.0
 [0.9.0]: https://github.com/frankslin/OpenCC/compare/v0.8.2...v0.9.0
 [0.4.2]: https://github.com/frankslin/OpenCC/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/frankslin/OpenCC/compare/v0.4.0...v0.4.1

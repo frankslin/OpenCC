@@ -1,22 +1,29 @@
 {
   "name": "Simplified Chinese to Traditional Chinese (The Chinese Government Standard)",
-  "segmentation": {
-    "type": "mmseg",
-    "dict": {
-      "type": "text",
-      "file": "cngov/STPhrases.txt"
-    }
-  },
-  "conversion_chain": [{
-    "dict": {
-      "type": "group",
-      "dicts": [{
+  "normalization": [
+    {
+      "dict": {
         "type": "text",
-        "file": "cngov/STPhrases.txt"
-      }, {
-        "type": "text",
-        "file": "cngov/STCharacters.txt"
-      }]
+        "file": "CJK_Compatibility_Ideographs.txt"
+      }
     }
-  }]
+  ],
+  "conversion_chain": [
+    {
+      "dict": {
+        "type": "group",
+        "match_policy": "short_circuit",
+        "dicts": [
+          {
+            "type": "text",
+            "file": "cngov/STPhrases.txt"
+          },
+          {
+            "type": "text",
+            "file": "cngov/STCharacters.txt"
+          }
+        ]
+      }
+    }
+  ]
 }
