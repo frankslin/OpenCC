@@ -1,5 +1,13 @@
 {
   "name": "Traditional Chinese to Traditional Chinese (Chinese Government standard)",
+  "normalization": [
+    {
+      "dict": {
+        "type": "ocd2",
+        "file": "CJK_Compatibility_Ideographs.ocd2"
+      }
+    }
+  ],
   "segmentation": {
     "type": "jieba",
     "resources": {
@@ -12,6 +20,7 @@
     {
       "dict": {
         "type": "group",
+        "match_policy": "short_circuit",
         "dicts": [
           {
             "type": "ocd2",

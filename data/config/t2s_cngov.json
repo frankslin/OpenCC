@@ -1,22 +1,29 @@
 {
   "name": "Traditional Chinese to Simplified Chinese",
-  "segmentation": {
-    "type": "mmseg",
-    "dict": {
-      "type": "text",
-      "file": "cngov/TSPhrases.txt"
-    }
-  },
-  "conversion_chain": [{
-    "dict": {
-      "type": "group",
-      "dicts": [{
+  "normalization": [
+    {
+      "dict": {
         "type": "text",
-        "file": "cngov/TSPhrases.txt"
-      }, {
-        "type": "text",
-        "file": "cngov/TSCharacters.txt"
-      }]
+        "file": "CJK_Compatibility_Ideographs.txt"
+      }
     }
-  }]
+  ],
+  "conversion_chain": [
+    {
+      "dict": {
+        "type": "group",
+        "match_policy": "short_circuit",
+        "dicts": [
+          {
+            "type": "text",
+            "file": "cngov/TSPhrases.txt"
+          },
+          {
+            "type": "text",
+            "file": "cngov/TSCharacters.txt"
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -30,7 +30,7 @@ WebAssembly port of OpenCC (Open Chinese Convert) with full API compatibility. B
 ```html
 <script type="module">
   // 1. Import from CDN
-  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.10.0/dist/esm/index.js";
+  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.11.0/dist/esm/index.js";
 
   // 2. Create converter (auto-downloads everything!)
   const converter = OpenCC.Converter({ config: "s2twp" });
@@ -429,6 +429,12 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 - Performance: Focuses on fidelity and compatibility with official OpenCC. May be slower than pure-JS implementations for raw throughput, but guarantees full OpenCC behavior.
 
 ## 📜 Changelog
+
+### 0.11.0 - 2026-07-02
+
+- Aligned bundled assets with **OpenCC 1.4.0** and rebuilt the WASM binary against the 1.4.0 source set
+- Updated CN Government Standard dictionaries to `Transformer(1.3.8)` and refreshed cngov configs, `.ocd2` assets, and tests
+- Fixed WASM asset rewriting for root-level text dictionaries referenced by cngov configs
 
 ### 0.10.0 - 2026-06-29
 
