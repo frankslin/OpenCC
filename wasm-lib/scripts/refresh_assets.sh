@@ -90,7 +90,7 @@ function rewriteDictRefs(node) {
   }
   if (!node || typeof node !== "object") return false;
   if (node.type === "text" && typeof node.file === "string" &&
-      node.file.startsWith("cngov/") && node.file.endsWith(".txt")) {
+      node.file.endsWith(".txt")) {
     node.type = "ocd2";
     node.file = node.file.replace(/\.txt$/, ".ocd2");
     changed = true;
