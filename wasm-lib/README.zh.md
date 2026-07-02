@@ -30,7 +30,7 @@ OpenCC（Open Chinese Convert）的 WebAssembly 移植版本，完全相容原�
 ```html
 <script type="module">
   // 1. 從 CDN 匯入
-  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.10.0/dist/esm/index.js";
+  import OpenCC from "https://cdn.jsdelivr.net/npm/opencc-wasm@0.11.0/dist/esm/index.js";
 
   // 2. 建立轉換器（自動下載所有資源！）
   const converter = OpenCC.Converter({ config: "s2twp" });
@@ -429,6 +429,12 @@ A：首次載入需要下載設定檔和字典檔（約 1-2MB）。後續轉換�
 - 效能：專注於精確度和與官方 OpenCC 的相容性。原始吞吐量可能比純 JavaScript 實作慢，但保證完整的 OpenCC 行為。
 
 ## 📜 變更歷史
+
+### 0.11.0 - 2026-07-02
+
+- 將隨附資源對齊 **OpenCC 1.4.0**，並以 1.4.0 source set 重新建置 WASM binary
+- 大陸政府標準詞典更新到 `Transformer(1.3.8)`，並刷新 cngov 設定、`.ocd2` 資產與測試資料
+- 修正 cngov 設定引用根層級文字詞典時，WASM 資產重寫未轉成 bundled `.ocd2` 的問題
 
 ### 0.10.0 - 2026-06-29
 

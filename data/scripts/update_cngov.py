@@ -19,6 +19,8 @@ TEXT_FILES = [
     "TSPhrases.txt",
 ]
 
+CNGOV_TEXT_FILES = set(TEXT_FILES)
+
 CONFIG_MAP = {
     "s2t.json": ("data/config", "s2t_cngov.json"),
     "t2gov.json": ("data/config", "t2cngov.json"),
@@ -74,7 +76,10 @@ def rewrite_dict_refs(node):
                 file_name = file_name[:-5] + ".txt"
             if file_name.endswith(".txt"):
                 out["type"] = "text"
-                out["file"] = "cngov/" + file_name
+                if file_name in CNGOV_TEXT_FILES:
+                    out["file"] = "cngov/" + file_name
+                else:
+                    out["file"] = file_name
         if out.get("user_dict_path") == "jieba_dict/user.dict.traditional.utf8":
             out["user_dict_path"] = "jieba_dict/user.dict.utf8"
         return out
