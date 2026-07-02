@@ -98,8 +98,9 @@ def test_dictionary_parser_strips_utf8_bom(tmp_path):
 def test_conversion():
     import opencc
 
-    with opencc_data.test_data_path('testcases.json').open('r', encoding='utf-8') as f:
-        parsed = json.load(f)
+    from opencc._opencc_pure import _strip_jsonc
+    raw = opencc_data.test_data_path('testcases.json').read_text(encoding='utf-8')
+    parsed = json.loads(_strip_jsonc(raw))
 
     for case in parsed.get('cases', []):
         input_text = case.get('input')
