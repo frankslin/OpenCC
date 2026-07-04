@@ -5,10 +5,10 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.11.0] - 2026-07-02
+## [0.11.0] - 2026-07-03
 
 - **Upstream alignment**: Bundled assets now track OpenCC **1.4.0** (`ver.1.4.0`), and the WASM binary is rebuilt against the 1.4.0 source set.
-- **CN Government Standard dictionary sync**: Updated bundled cngov dictionaries to `Transformer(1.3.8)` (`529a920`) and refreshed cngov configs, `.ocd2` assets, and tests.
+- **CN Government Standard dictionary sync**: Updated bundled cngov dictionaries to `Transformer(1.3.9)` (`c41d4af`) — removes incorrectly retained non-《通规》 standard characters (30+ groups), fixes 坏→坯 and related entries, and rebuilds `.ocd2` assets.
 - **Build compatibility**: Added `DartsDict.cpp` and the Darts include path to the Emscripten source list, matching 1.4.0 `Config.cpp` linkage.
 - **Asset refresh fix**: WASM config rewriting now converts root-level text dictionary references such as `CJK_Compatibility_Ideographs.txt` to bundled `.ocd2` files.
 
