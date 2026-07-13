@@ -9,7 +9,7 @@ _readme_files = (
     os.path.join(_this_dir, 'README.md'),
     os.path.join(_this_dir, 'README.zh-TW.md'),
 )
-OPENCC_DATA_VERSION = '1.4.0'
+OPENCC_DATA_VERSION = '1.4.1'
 
 
 def _read_readme_for_pkg_info(path):
