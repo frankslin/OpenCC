@@ -5,6 +5,14 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-07-12
+
+- **Upstream alignment**: Bundled assets now track OpenCC **1.4.1** (`ver.1.4.1`), and the WASM binary is rebuilt against the 1.4.1 source set.
+- **CN Government Standard dictionary sync**: Updated bundled cngov dictionaries to `Transformer(1.3.10)` (`512977b`) — picks up the 复/覆 conversion fix, 複流形 in TSPhrases, and 繁转简 表外正字 corrections, and rebuilds the affected `.ocd2` assets.
+- **Tofu-risk dictionary option**: `OpenCC.Converter` / `OpenCC.Converter().inspect` accept a new `includeTofuRiskDictionaries` option. It defaults to `true` — keeping dictionaries marked `may_output_tofu`, matching the official OpenCC library APIs (`node/opencc.js` and the Python binding). Set it to `false` to skip them, matching the OpenCC command-line default. Filtering mirrors `node/opencc.js` and is applied in JavaScript before `opencc_create`, so no native rebuild is required to toggle it.
+- **TypeScript**: `ConverterOptions` gains an optional `includeTofuRiskDictionaries?: boolean` field.
+- **CommonJS entry fix**: `dist/cjs/index.cjs` no longer uses `import.meta`, which made `require("opencc-wasm")` throw at parse time in CommonJS projects. It now derives its base path from `__filename` and requires the sibling glue directly. Added a CJS smoke test (`npm run test:cjs`). ESM/CDN usage was unaffected.
+
 ## [0.11.0] - 2026-07-03
 
 - **Upstream alignment**: Bundled assets now track OpenCC **1.4.0** (`ver.1.4.0`), and the WASM binary is rebuilt against the 1.4.0 source set.

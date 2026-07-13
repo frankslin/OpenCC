@@ -430,6 +430,12 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 
 ## 📜 Changelog
 
+### 0.12.0 - 2026-07-12
+
+- Aligned bundled assets with **OpenCC 1.4.1** and rebuilt the WASM binary against the 1.4.1 source set
+- Updated CN Government Standard dictionaries to `Transformer(1.3.10)` and rebuilt the affected cngov `.ocd2` assets
+- Added the `includeTofuRiskDictionaries` converter option (defaults to `true`, matching the official OpenCC library APIs; set `false` to skip `may_output_tofu` dictionaries like the CLI)
+
 ### 0.11.0 - 2026-07-02
 
 - Aligned bundled assets with **OpenCC 1.4.0** and rebuilt the WASM binary against the 1.4.0 source set
