@@ -25,6 +25,14 @@ export interface ConverterOptions {
    * If specified, 'from' and 'to' will be ignored
    */
   config?: string;
+
+  /**
+   * Whether to include dictionaries marked `may_output_tofu` (dictionaries that
+   * may emit rare characters some fonts render as tofu). Defaults to `true`,
+   * matching the official OpenCC library APIs. Set to `false` to skip them,
+   * matching the OpenCC command-line default.
+   */
+  includeTofuRiskDictionaries?: boolean;
 }
 
 /**

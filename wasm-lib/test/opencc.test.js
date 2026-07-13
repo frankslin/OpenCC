@@ -13,18 +13,37 @@ function loadCases(filename) {
   return parsed?.cases || [];
 }
 
-const cases = [
-  ...loadCases("testcases.json"),
-  ...loadCases("cngov_testcases.json"),
-  ...loadCases("jieba_comparison_testcases.json"),
+// Each fixture file mirrors a specific native harness. testcases.json and
+// cngov_testcases.json are validated against the OpenCC library (which includes
+// tofu-risk dictionaries by default), while jieba_comparison_testcases.json
+// mirrors the CLI-based jieba integration test (which skips them). Run each file
+// in the matching mode so wasm is compared apples-to-apples.
+const caseGroups = [
+  { file: "testcases.json", includeTofuRiskDictionaries: true },
+  { file: "cngov_testcases.json", includeTofuRiskDictionaries: true },
+  {
+    file: "jieba_comparison_testcases.json",
+    includeTofuRiskDictionaries: false,
+  },
 ];
 
+const cases = caseGroups.flatMap((group) =>
+  loadCases(group.file).map((tc) => ({
+    ...tc,
+    includeTofuRiskDictionaries: group.includeTofuRiskDictionaries,
+  }))
+);
+
 const converterCache = new Map();
-function getConverter(config) {
-  if (!converterCache.has(config)) {
-    converterCache.set(config, OpenCC.Converter({ config }));
+function getConverter(config, includeTofuRiskDictionaries) {
+  const cacheKey = `${config}::tofu=${includeTofuRiskDictionaries}`;
+  if (!converterCache.has(cacheKey)) {
+    converterCache.set(
+      cacheKey,
+      OpenCC.Converter({ config, includeTofuRiskDictionaries })
+    );
   }
-  return converterCache.get(config);
+  return converterCache.get(cacheKey);
 }
 
 cases.forEach((tc, idx) => {
@@ -32,11 +51,28 @@ cases.forEach((tc, idx) => {
   Object.entries(tc.expected).forEach(([cfg, expected]) => {
     const configName = `${cfg}.json`;
     test(`[${configName}] case #${idx + 1}${tc.id ? ` (${tc.id})` : ""}`, async () => {
-      const convert = getConverter(configName);
+      const convert = getConverter(configName, tc.includeTofuRiskDictionaries);
       const actual = await convert(tc.input);
       assert.strictEqual(actual, expected);
     });
   });
+});
+
+test("[tofu] includeTofuRiskDictionaries toggles tofu-risk output", async () => {
+  // Default aligns with the official OpenCC library APIs (include tofu-risk dicts).
+  const included = OpenCC.Converter({ config: "tw2sp_jieba.json" });
+  const includedExplicit = OpenCC.Converter({
+    config: "tw2sp_jieba.json",
+    includeTofuRiskDictionaries: true,
+  });
+  const skipped = OpenCC.Converter({
+    config: "tw2sp_jieba.json",
+    includeTofuRiskDictionaries: false,
+  });
+
+  assert.strictEqual(await included("㑮"), "𫝈");
+  assert.strictEqual(await includedExplicit("㑮"), "𫝈");
+  assert.strictEqual(await skipped("㑮"), "㑮");
 });
 
 test("[inspect] output matches normal conversion for s2twp", async () => {

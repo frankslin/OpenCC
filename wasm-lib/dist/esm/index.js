@@ -122,6 +122,40 @@ function collectOcd2Files(node, acc) {
   }
 }
 
+// Tofu-risk dictionary filtering, mirroring node/opencc.js. Dictionaries marked
+// `may_output_tofu` are stripped when the caller opts out (includeTofuRiskDictionaries
+// === false). The default keeps them, matching the official OpenCC library APIs
+// (node/opencc.js and the Python binding both default to include).
+function filterTofuRiskDicts(dict, includeTofuRiskDictionaries) {
+  if (!dict) return null;
+  if (dict.type === "inline") {
+    return dict;
+  }
+  if (dict.may_output_tofu && !includeTofuRiskDictionaries) {
+    return null;
+  }
+  if (dict.type === "group" && Array.isArray(dict.dicts)) {
+    dict.dicts = dict.dicts
+      .map((d) => filterTofuRiskDicts(d, includeTofuRiskDictionaries))
+      .filter(Boolean);
+    if (dict.dicts.length === 0) {
+      return null;
+    }
+  }
+  return dict;
+}
+
+function filterTofuRiskConversionChain(config, includeTofuRiskDictionaries) {
+  if (!Array.isArray(config.conversion_chain)) return;
+  config.conversion_chain = config.conversion_chain
+    .map((step) => {
+      if (!step || !step.dict) return step;
+      step.dict = filterTofuRiskDicts(step.dict, includeTofuRiskDictionaries);
+      return step.dict ? step : null;
+    })
+    .filter(Boolean);
+}
+
 function collectSegmentationResources(segmentation, acc) {
   if (!segmentation || typeof segmentation !== "object") return;
   const resources = segmentation.resources;
@@ -155,13 +189,18 @@ async function fetchBuffer(url) {
   return new Uint8Array(await resp.arrayBuffer());
 }
 
-async function ensureConfig(configName) {
-  if (handles.has(configName)) return handles.get(configName);
+async function ensureConfig(configName, includeTofuRiskDictionaries = true) {
+  const cacheKey = `${configName}::tofu=${includeTofuRiskDictionaries}`;
+  if (handles.has(cacheKey)) return handles.get(cacheKey);
   const { mod, api: apiFns } = await getApi();
   mod.FS.mkdirTree("/data/config");
   mod.FS.mkdirTree("/data/dict");
   const cfgUrl = new URL(`./data/config/${configName}`, BASE_URL);
   const cfgJson = JSON.parse(await fetchText(cfgUrl));
+
+  if (!includeTofuRiskDictionaries) {
+    filterTofuRiskConversionChain(cfgJson, includeTofuRiskDictionaries);
+  }
 
   const dicts = new Set();
   const resources = new Set();
@@ -208,14 +247,18 @@ async function ensureConfig(configName) {
   if (Array.isArray(cfgJson.conversion_chain)) {
     cfgJson.conversion_chain.forEach((item) => patchPaths(item?.dict));
   }
-  mod.FS.writeFile(`/data/config/${configName}`, JSON.stringify(cfgJson));
-  loadedConfigs.add(configName);
+  // Write include/skip variants to distinct paths so both can coexist in the VFS.
+  const vfsConfigName = includeTofuRiskDictionaries
+    ? configName
+    : `notofu.${configName}`;
+  mod.FS.writeFile(`/data/config/${vfsConfigName}`, JSON.stringify(cfgJson));
+  loadedConfigs.add(vfsConfigName);
 
-  const handle = apiFns.create(`/data/config/${configName}`);
+  const handle = apiFns.create(`/data/config/${vfsConfigName}`);
   if (!handle || handle < 0) {
     throw new Error(`opencc_create failed for ${configName}`);
   }
-  handles.set(configName, handle);
+  handles.set(cacheKey, handle);
   return handle;
 }
 
@@ -229,7 +272,7 @@ function resolveConfig(from, to) {
   return m[t]; // may be null for identical locale (no-op)
 }
 
-function createConverter({ from, to, config }) {
+function createConverter({ from, to, config, includeTofuRiskDictionaries }) {
   // Support direct config name (e.g., "s2twp.json" or "s2twp")
   let configName;
 
@@ -243,15 +286,17 @@ function createConverter({ from, to, config }) {
     throw new Error('Either "config" or both "from" and "to" must be specified');
   }
 
+  const includeTofu = includeTofuRiskDictionaries !== false;
+
   return async (text) => {
     if (configName === null) return text; // no-op
-    const handle = await ensureConfig(configName);
+    const handle = await ensureConfig(configName, includeTofu);
     const { api: apiFns } = await getApi();
     return apiFns.convert(handle, text);
   };
 }
 
-function createInspector({ from, to, config }) {
+function createInspector({ from, to, config, includeTofuRiskDictionaries }) {
   let configName;
 
   if (config) {
@@ -262,6 +307,8 @@ function createInspector({ from, to, config }) {
     throw new Error('Either "config" or both "from" and "to" must be specified');
   }
 
+  const includeTofu = includeTofuRiskDictionaries !== false;
+
   return async (text) => {
     if (configName === null) {
       return {
@@ -271,7 +318,7 @@ function createInspector({ from, to, config }) {
         output: text,
       };
     }
-    const handle = await ensureConfig(configName);
+    const handle = await ensureConfig(configName, includeTofu);
     const { api: apiFns } = await getApi();
     return JSON.parse(apiFns.inspect(handle, text));
   };
