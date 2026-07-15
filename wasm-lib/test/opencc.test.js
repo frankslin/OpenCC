@@ -105,3 +105,26 @@ test("[inspect] config shorthand without .json stays supported", async () => {
   assert.equal(await convert("一叶知秋"), "一葉知秋");
   assert.equal(inspected.output, "一葉知秋");
 });
+
+test("[candidates] enumerates every branch value for a single word", async () => {
+  const convert = getConverter("s2t.json");
+  const candidates = await convert.candidates("里");
+
+  assert.ok(Array.isArray(candidates));
+  // STCharacters.txt maps 里 to all three: 裏 里 哩.
+  assert.deepEqual(candidates, ["裏", "里", "哩"]);
+});
+
+test("[candidates] returns empty for a word not in any chain dictionary", async () => {
+  const convert = getConverter("s2t.json");
+  const candidates = await convert.candidates("xyz_not_a_word");
+
+  assert.deepEqual(candidates, []);
+});
+
+test("[candidates] no-op locale pair returns the input word unchanged", async () => {
+  const convert = OpenCC.Converter({ from: "cn", to: "cn" });
+  const candidates = await convert.candidates("里");
+
+  assert.deepEqual(candidates, ["里"]);
+});

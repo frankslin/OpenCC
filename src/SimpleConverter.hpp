@@ -176,6 +176,22 @@ public:
    */
   ConversionInspectionResult Inspect(std::string_view input) const;
 
+  /**
+   * Enumerates every candidate form of a single word produced by running it
+   * through this converter's conversion chain. For example, converting 里
+   * through s2t.json yields both 里 and 裏, since s2t.json's dictionary maps
+   * 里 to both. Unlike Convert(), which segments the whole input and returns
+   * exactly one output string, this treats @p word as a single, indivisible
+   * word and returns every branch value, in discovery order with duplicates
+   * removed. Intended for input-method and tooling use (candidate lists),
+   * not for converting arbitrary multi-word text.
+   * @param word UTF-8 text of a single word; need not be null-terminated.
+   * @return Candidate forms, or empty if no dictionary in the conversion
+   *   chain contains @p word, or if this converter has no single conversion
+   *   chain (e.g. a converter composed of multiple pipeline stages).
+   */
+  std::vector<std::string> GetConversionCandidates(std::string_view word) const;
+
 private:
   const void* internalData;
 };

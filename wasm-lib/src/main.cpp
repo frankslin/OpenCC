@@ -1,6 +1,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include <emscripten/emscripten.h>
 #ifdef OPENCC_WASM_WITH_OPENCC
@@ -14,6 +15,7 @@ struct Converter {
   std::unique_ptr<opencc::SimpleConverter> simple;
   std::string out;
   std::string inspect_json;
+  std::string candidates_json;
 };
 
 static std::unordered_map<int, Converter> converters;
@@ -150,6 +152,39 @@ const char* opencc_inspect(int handle, const char* input) {
   (void)handle;
   (void)input;
   return throw_error("opencc_inspect: OPENCC_WASM_WITH_OPENCC not enabled");
+#endif
+}
+
+const char* opencc_convert_candidates(int handle, const char* input) {
+#ifdef OPENCC_WASM_WITH_OPENCC
+  if (input == nullptr) {
+    return throw_error("opencc_convert_candidates: null input");
+  }
+  auto it = converters.find(handle);
+  if (it == converters.end()) {
+    return throw_error("opencc_convert_candidates: invalid handle");
+  }
+  try {
+    const std::vector<std::string> candidates =
+        it->second.simple->GetConversionCandidates(input);
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    writer.StartArray();
+    for (const auto& candidate : candidates) {
+      writer.String(candidate.data(),
+                    static_cast<rapidjson::SizeType>(candidate.size()));
+    }
+    writer.EndArray();
+    it->second.candidates_json.assign(buffer.GetString(), buffer.GetSize());
+    return it->second.candidates_json.c_str();
+  } catch (const std::exception& ex) {
+    return throw_error(ex.what());
+  }
+#else
+  (void)handle;
+  (void)input;
+  return throw_error(
+      "opencc_convert_candidates: OPENCC_WASM_WITH_OPENCC not enabled");
 #endif
 }
 
