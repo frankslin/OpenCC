@@ -20,6 +20,7 @@
 
 #include "Config.hpp"
 #include "Converter.hpp"
+#include "ConversionCandidates.hpp"
 #include "UTF8Util.hpp"
 #include "opencc.h"
 
@@ -177,6 +178,16 @@ SimpleConverter::Inspect(std::string_view input) const {
   try {
     const InternalData* data = (InternalData*)internalData;
     return data->converter->Inspect(input);
+  } catch (Exception& ex) {
+    throw std::runtime_error(ex.what());
+  }
+}
+
+std::vector<std::string>
+SimpleConverter::GetConversionCandidates(std::string_view word) const {
+  try {
+    const InternalData* data = (InternalData*)internalData;
+    return GetAllConversions(*data->converter, word);
   } catch (Exception& ex) {
     throw std::runtime_error(ex.what());
   }

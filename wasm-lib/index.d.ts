@@ -54,6 +54,18 @@ export interface InspectionResult {
 export interface ConverterFunction {
   (text: string): Promise<string>;
   inspect(text: string): Promise<InspectionResult>;
+
+  /**
+   * Enumerates every candidate conversion of a single word (e.g. all
+   * traditional variants of a simplified character), for use in input-method
+   * style candidate lists. Unlike calling the converter itself, `word` is
+   * treated as one indivisible word, not arbitrary multi-word text.
+   *
+   * @param word A single word to enumerate candidates for.
+   * @returns Candidate forms in discovery order with duplicates removed.
+   *   Empty if no dictionary in the conversion chain contains `word`.
+   */
+  candidates(word: string): Promise<string[]>;
 }
 
 /**

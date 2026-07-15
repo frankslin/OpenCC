@@ -724,6 +724,7 @@ cc_library(
     deps = [
         ":common_lib",
         ":config_lib",
+        ":conversion_candidates_lib",
         ":converter_lib",
         ":resource_provider_lib",
         ":utf8_util_lib",

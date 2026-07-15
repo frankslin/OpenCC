@@ -40,6 +40,16 @@ protected:
 
 TEST_F(SimpleConverterTest, Convert) { TestConverter(CONFIG_TEST_JSON_PATH); }
 
+// End-to-end through the public SimpleConverter API and the real
+// Config::NewFromFile pipeline (not a synthetic in-memory dictionary), unlike
+// ConversionCandidatesTest which exercises GetAllConversions directly.
+TEST_F(SimpleConverterTest, GetConversionCandidates) {
+  const SimpleConverter converter(CONFIG_TEST_JSON_PATH);
+  EXPECT_EQ((std::vector<std::string>{utf8("於")}),
+            converter.GetConversionCandidates(utf8("于")));
+  EXPECT_TRUE(converter.GetConversionCandidates(utf8("其")).empty());
+}
+
 TEST_F(SimpleConverterTest, Multithreading) {
   const auto& routine = [this](const std::string& config) {
     TestConverter(config);

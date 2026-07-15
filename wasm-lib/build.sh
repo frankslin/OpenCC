@@ -17,6 +17,7 @@ OPENCC_SRCS=(
   ${OPENCC_SRC_DIR}/src/BinaryDict.cpp
   ${OPENCC_SRC_DIR}/src/Config.cpp
   ${OPENCC_SRC_DIR}/src/Conversion.cpp
+  ${OPENCC_SRC_DIR}/src/ConversionCandidates.cpp
   ${OPENCC_SRC_DIR}/src/ConversionChain.cpp
   ${OPENCC_SRC_DIR}/src/Converter.cpp
   ${OPENCC_SRC_DIR}/src/DartsDict.cpp
@@ -93,7 +94,7 @@ COMMON_FLAGS=(
   -s FORCE_FILESYSTEM=1
   -s ALLOW_MEMORY_GROWTH=1
   -s EXPORT_NAME="createOpenCCWasm"
-  -s EXPORTED_FUNCTIONS="['_opencc_create','_opencc_convert','_opencc_inspect','_opencc_destroy','_malloc','_free']"
+  -s EXPORTED_FUNCTIONS="['_opencc_create','_opencc_convert','_opencc_inspect','_opencc_convert_candidates','_opencc_destroy','_malloc','_free']"
   -s EXPORTED_RUNTIME_METHODS="['cwrap','FS','ccall','lengthBytesUTF8','stringToUTF8','UTF8ToString']"
 )
 

@@ -100,6 +100,7 @@ async function getApi() {
       create: mod.cwrap("opencc_create", "number", ["string"]),
       convert: mod.cwrap("opencc_convert", "string", ["number", "string"]),
       inspect: mod.cwrap("opencc_inspect", "string", ["number", "string"]),
+      candidates: mod.cwrap("opencc_convert_candidates", "string", ["number", "string"]),
       destroy: mod.cwrap("opencc_destroy", null, ["number"]),
     };
   }
@@ -324,6 +325,31 @@ function createInspector({ from, to, config, includeTofuRiskDictionaries }) {
   };
 }
 
+function createCandidatesFn({ from, to, config, includeTofuRiskDictionaries }) {
+  let configName;
+
+  if (config) {
+    configName = config.endsWith(".json") ? config : `${config}.json`;
+  } else if (from && to) {
+    configName = resolveConfig(from, to);
+  } else {
+    throw new Error('Either "config" or both "from" and "to" must be specified');
+  }
+
+  const includeTofu = includeTofuRiskDictionaries !== false;
+
+  // Enumerates every candidate conversion of a single word (e.g. all
+  // traditional variants of a simplified character), intended for input
+  // method candidate lists. Unlike the converter itself, this treats `word`
+  // as one indivisible word, not arbitrary multi-word text.
+  return async (word) => {
+    if (configName === null) return [word];
+    const handle = await ensureConfig(configName, includeTofu);
+    const { api: apiFns } = await getApi();
+    return JSON.parse(apiFns.candidates(handle, word));
+  };
+}
+
 function CustomConverter(dictOrString) {
   let pairs = [];
   if (typeof dictOrString === "string") {
@@ -364,8 +390,10 @@ export const OpenCC = {
   Converter(opts) {
     const fn = createConverter(opts);
     const inspect = createInspector(opts);
+    const candidates = createCandidatesFn(opts);
     const converter = (text) => fn(text);
     converter.inspect = (text) => inspect(text);
+    converter.candidates = (word) => candidates(word);
     return converter;
   },
   CustomConverter,
