@@ -128,3 +128,19 @@ test("[candidates] no-op locale pair returns the input word unchanged", async ()
 
   assert.deepEqual(candidates, ["里"]);
 });
+
+// Example: an input method typed "li3" and produced the candidate "里" from
+// its own dictionary. Before showing it to the user, offer every traditional
+// form OpenCC knows about as alternative candidates, exactly like librime's
+// ConvertWord does with the native OpenCC library.
+test("[candidates] example: expanding an IME candidate into every OpenCC variant", async () => {
+  const s2t = OpenCC.Converter({ config: "s2t.json" });
+  const imeCandidate = "里";
+
+  const variants = await s2t.candidates(imeCandidate);
+  assert.deepEqual(variants, ["裏", "里", "哩"]);
+
+  // A word not covered by any dictionary in the chain is reported as "not
+  // found" (empty array), not silently echoed back.
+  assert.deepEqual(await s2t.candidates("OpenCC"), []);
+});

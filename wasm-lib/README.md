@@ -83,6 +83,23 @@ console.log(inspected.stages);   // Per-stage conversion output
 console.log(inspected.output);   // Final converted output
 ```
 
+...and a `candidates()` helper for input-method-style candidate lists. Unlike
+the converter itself (which segments arbitrary text), `candidates()` treats
+its argument as a single, indivisible word and returns every form OpenCC's
+conversion chain can produce for it — useful for showing users all plausible
+variants instead of silently picking one, the same job librime's
+`Opencc::ConvertWord` does with the native OpenCC library:
+
+```javascript
+const converter = OpenCC.Converter({ config: "s2t" });
+const candidates = await converter.candidates("里");
+console.log(candidates); // ["裏", "里", "哩"] — every traditional form of 里
+
+// A word not covered by any dictionary in the chain returns an empty array,
+// not the input word echoed back.
+await converter.candidates("OpenCC"); // []
+```
+
 The same API also works with the CN Government Standard Jieba configs:
 
 ```javascript
@@ -429,6 +446,12 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 - Performance: Focuses on fidelity and compatibility with official OpenCC. May be slower than pure-JS implementations for raw throughput, but guarantees full OpenCC behavior.
 
 ## 📜 Changelog
+
+### 0.13.0 - 2026-07-14
+
+- Added `converter.candidates(word)`, an input-method-style candidate list API: enumerates every form OpenCC's conversion chain produces for a single word (e.g. `s2t` on `里` yields `["裏", "里", "哩"]`), returning an empty array when the word isn't covered by any dictionary in the chain
+- Backed by a new `SimpleConverter::GetConversionCandidates` method in the native OpenCC C++ API and a new `opencc_convert_candidates` WASM entry point
+- Added typings, tests (including a CommonJS `require()` regression test), and documentation for the candidates workflow
 
 ### 0.12.0 - 2026-07-12
 

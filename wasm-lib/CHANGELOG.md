@@ -5,6 +5,12 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-07-14
+
+- **Candidate list API**: `OpenCC.Converter().candidates(word)` enumerates every candidate form OpenCC's conversion chain produces for a single word (e.g. `s2t` on `里` yields `["裏", "里", "哩"]`), for input-method-style candidate lists. Unlike calling the converter itself, `word` is treated as one indivisible word rather than arbitrary multi-word text; a word not covered by any dictionary in the chain returns an empty array. Backed by a new `SimpleConverter::GetConversionCandidates` method in the native OpenCC C++ API (added without an ABI bump, since `SimpleConverter` is a PImpl facade with no virtual methods) and a new `opencc_convert_candidates` WASM entry point.
+- **TypeScript**: `ConverterFunction` gains `candidates(word: string): Promise<string[]>`.
+- **CommonJS parity**: The hand-maintained `dist/cjs/index.cjs` shim now mirrors `candidates()` as well, with a dedicated `require()`-path regression test (`npm run test:cjs`) guarding against future drift between the ESM source and the CJS shim.
+
 ## [0.12.0] - 2026-07-12
 
 - **Upstream alignment**: Bundled assets now track OpenCC **1.4.1** (`ver.1.4.1`), and the WASM binary is rebuilt against the 1.4.1 source set.
