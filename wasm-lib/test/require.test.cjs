@@ -15,6 +15,13 @@ test("[cjs] require(dist/cjs/index.cjs) loads and converts", async () => {
   assert.strictEqual(await convert("简体中文测试"), "簡體中文測試");
 });
 
+test("[cjs] candidates(word) enumerates every branch value over CJS", async () => {
+  const OpenCC = require(distEntry);
+  const convert = OpenCC.Converter({ config: "s2t.json" });
+  // STCharacters.txt maps 里 to all three: 裏 里 哩.
+  assert.deepEqual(await convert.candidates("里"), ["裏", "里", "哩"]);
+});
+
 test("[cjs] includeTofuRiskDictionaries option works over CJS", async () => {
   const OpenCC = require(distEntry);
   const skip = OpenCC.Converter({

@@ -83,6 +83,17 @@ console.log(inspected.stages);   // 每一階段的轉換結果
 console.log(inspected.output);   // 最終輸出
 ```
 
+……以及 `candidates()` 輔助方法，用於輸入法風格的候選詞列表。與轉換器本身（會對任意長度的文字做分詞）不同，`candidates()` 把傳入的字串視為單一、不可分割的詞，回傳 OpenCC 轉換鏈能產生的每一種形式——適合把所有合理的候選都攤給使用者選，而不是悄悄只挑一個，功能上對應 librime 用原生 OpenCC 函式庫做的 `Opencc::ConvertWord`：
+
+```javascript
+const converter = OpenCC.Converter({ config: "s2t" });
+const candidates = await converter.candidates("里");
+console.log(candidates); // ["裏", "里", "哩"] —— 里 的所有繁體形式
+
+// 轉換鏈裡任何字典都查不到的詞，回傳空陣列，而不是把輸入原樣送回。
+await converter.candidates("OpenCC"); // []
+```
+
 同樣的 API 也可直接用在大陸政府標準繁體的 Jieba 設定：
 
 ```javascript
@@ -429,6 +440,12 @@ A：首次載入需要下載設定檔和字典檔（約 1-2MB）。後續轉換�
 - 效能：專注於精確度和與官方 OpenCC 的相容性。原始吞吐量可能比純 JavaScript 實作慢，但保證完整的 OpenCC 行為。
 
 ## 📜 變更歷史
+
+### 0.13.0 - 2026-07-14
+
+- 新增 `converter.candidates(word)`，輸入法風格的候選詞列表 API：列舉 OpenCC 轉換鏈對單一詞能產生的每一種形式（例如 `s2t` 對「里」回傳 `["裏", "里", "哩"]`），轉換鏈裡任何字典都查不到該詞時回傳空陣列
+- 底層是原生 OpenCC C++ API 新增的 `SimpleConverter::GetConversionCandidates` 方法，以及 WASM 新增的 `opencc_convert_candidates` 入口
+- 補上 candidates 流程的型別、測試（含 CommonJS `require()` 回歸測試）與文件
 
 ### 0.11.0 - 2026-07-02
 
