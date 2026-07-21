@@ -100,6 +100,34 @@ console.log(candidates); // ["裏", "里", "哩"] — every traditional form of 
 await converter.candidates("OpenCC"); // []
 ```
 
+...and a `convertWithAmbiguities()` helper that converts the whole text like
+`converter()` but also flags every output span whose dictionary match is
+one-to-many (a word that could legitimately convert more than one way, e.g.
+简体 `文丑` in `s2t`, which may be the Three Kingdoms general `文醜` or the
+opera role `文丑`). The result is an array of records:
+
+- `{ def: string }` — declares a distinct source word, referenced by later
+  `amb` records via its position in the `def` list.
+- `{ lit: string }` — an unambiguous run of converted output.
+- `{ amb: { t: string, s: number } }` — an ambiguous span: `t` is the default
+  converted text and `s` indexes the `def` that produced it. Pass that `def`
+  to `candidates()` to enumerate every alternative.
+
+```javascript
+const converter = OpenCC.Converter({ config: "s2t" });
+const records = await converter.convertWithAmbiguities("大战文丑");
+console.log(records);
+// [ { def: "文丑" }, { lit: "大戰" }, { amb: { t: "文丑", s: 0 } } ]
+
+// Reconstruct the plain conversion output:
+const output = records.map(r => r.lit ?? r.amb?.t ?? "").join(""); // 大戰文丑
+
+// Resolve an ambiguous span into all candidates:
+const defs = records.filter(r => r.def !== undefined).map(r => r.def);
+const amb = records.find(r => r.amb !== undefined);
+await converter.candidates(defs[amb.amb.s]); // ["文丑", "文醜"]
+```
+
 The same API also works with the CN Government Standard Jieba configs:
 
 ```javascript
@@ -447,11 +475,13 @@ A: Initial load downloads configs + dicts (~1-2MB). Subsequent conversions are f
 
 ## 📜 Changelog
 
-### 0.13.0 - 2026-07-14
+### 0.13.0 - 2026-07-21
 
 - Added `converter.candidates(word)`, an input-method-style candidate list API: enumerates every form OpenCC's conversion chain produces for a single word (e.g. `s2t` on `里` yields `["裏", "里", "哩"]`), returning an empty array when the word isn't covered by any dictionary in the chain
 - Backed by a new `SimpleConverter::GetConversionCandidates` method in the native OpenCC C++ API and a new `opencc_convert_candidates` WASM entry point
-- Added typings, tests (including a CommonJS `require()` regression test), and documentation for the candidates workflow
+- Added `converter.convertWithAmbiguities(text)`, which converts the whole text like `converter()` while flagging every output span whose dictionary match is one-to-many; results are `{ def }` / `{ lit }` / `{ amb: { t, s } }` records, where each `amb.s` indexes a `def` word that can be passed to `candidates()` to enumerate alternatives
+- Backed by the native OpenCC `ConvertWithAmbiguities()` API and a new `opencc_convert_with_ambiguities` WASM entry point
+- Added typings, tests (including a CommonJS `require()` regression test), and documentation for both the candidates and ambiguities workflows
 
 ### 0.12.0 - 2026-07-12
 

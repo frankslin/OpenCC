@@ -35,3 +35,15 @@ test("[cjs] includeTofuRiskDictionaries option works over CJS", async () => {
   assert.strictEqual(await skip("㑮"), "㑮");
   assert.strictEqual(await include("㑮"), "𫝈");
 });
+
+test("[cjs] convertWithAmbiguities works over CJS", async () => {
+  const OpenCC = require(distEntry);
+  const convert = OpenCC.Converter({ config: "s2t.json" });
+  const result = await convert.convertWithAmbiguities("大战文丑");
+  
+  assert.deepEqual(result, [
+    { def: "文丑" },
+    { lit: "大戰" },
+    { amb: { t: "文丑", s: 0 } },
+  ]);
+});

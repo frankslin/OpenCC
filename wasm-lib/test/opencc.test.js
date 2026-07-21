@@ -144,3 +144,42 @@ test("[candidates] example: expanding an IME candidate into every OpenCC variant
   // found" (empty array), not silently echoed back.
   assert.deepEqual(await s2t.candidates("OpenCC"), []);
 });
+
+test("[ambiguities] s2t detects ambiguous spans", async () => {
+  const convert = getConverter("s2t.json");
+  const result = await convert.convertWithAmbiguities("大战文丑的时候，他的头发很干燥");
+
+  assert.deepEqual(result, [
+    { def: "文丑" },
+    { lit: "大戰" },
+    { amb: { t: "文丑", s: 0 } },
+    { lit: "的時候，他的頭髮很乾燥" },
+  ]);
+
+  // The output text matches the regular conversion
+  const output = result.map(s => s.lit ?? s.amb?.t ?? "").join("");
+  assert.equal(output, await convert("大战文丑的时候，他的头发很干燥"));
+
+  // The source can be passed to candidates()
+  const defs = result.filter(s => s.def !== undefined).map(s => s.def);
+  const amb = result.find(s => s.amb !== undefined);
+  assert.deepEqual(await convert.candidates(defs[amb.amb.s]), ["文丑", "文醜"]);
+});
+
+test("[ambiguities] unambiguous text returns only literal segments", async () => {
+  const convert = getConverter("s2t.json");
+  const result = await convert.convertWithAmbiguities("OpenCC");
+
+  assert.deepEqual(result, [
+    { lit: "OpenCC" }
+  ]);
+});
+
+test("[ambiguities] no-op locale pair returns literal text", async () => {
+  const convert = OpenCC.Converter({ from: "cn", to: "cn" });
+  const result = await convert.convertWithAmbiguities("大战文丑");
+
+  assert.deepEqual(result, [
+    { lit: "大战文丑" }
+  ]);
+});

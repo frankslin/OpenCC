@@ -5,8 +5,11 @@
 
 #include <emscripten/emscripten.h>
 #ifdef OPENCC_WASM_WITH_OPENCC
+#define private public
 #include "../src/opencc.h"
+#undef private
 #include "../src/ConversionInspection.hpp"
+#include "../src/ConversionAmbiguities.hpp"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #endif
@@ -16,6 +19,7 @@ struct Converter {
   std::string out;
   std::string inspect_json;
   std::string candidates_json;
+  std::string ambiguities_json;
 };
 
 static std::unordered_map<int, Converter> converters;
@@ -185,6 +189,79 @@ const char* opencc_convert_candidates(int handle, const char* input) {
   (void)input;
   return throw_error(
       "opencc_convert_candidates: OPENCC_WASM_WITH_OPENCC not enabled");
+#endif
+}
+
+const char* opencc_convert_with_ambiguities(int handle, const char* input) {
+#ifdef OPENCC_WASM_WITH_OPENCC
+  if (input == nullptr) {
+    return throw_error("opencc_convert_with_ambiguities: null input");
+  }
+  auto it = converters.find(handle);
+  if (it == converters.end()) {
+    return throw_error("opencc_convert_with_ambiguities: invalid handle");
+  }
+  try {
+    // ConvertWithAmbiguities() needs the underlying opencc::Converter, but
+    // SimpleConverter exposes no public accessor for it (unlike candidates,
+    // which go through SimpleConverter::GetConversionCandidates). The private
+    // `internalData` member is reached via `#define private public` around the
+    // opencc.h include above; here we reinterpret it as SimpleConverter.cpp's
+    // InternalData layout ({ const ConverterPtr converter; }). Keep this struct
+    // in sync with SimpleConverter.cpp if that internal type ever changes.
+    struct InternalDataHack {
+      const opencc::ConverterPtr converter;
+    };
+    const InternalDataHack* data = reinterpret_cast<const InternalDataHack*>(it->second.simple->internalData);
+    opencc::AnnotatedConversion result = opencc::ConvertWithAmbiguities(*data->converter, input);
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    writer.StartArray();
+
+    for (const auto& source : result.sources) {
+      writer.StartObject();
+      writer.Key("def");
+      writer.String(source.data(), static_cast<rapidjson::SizeType>(source.size()));
+      writer.EndObject();
+    }
+
+    size_t consumed = 0;
+    auto writeLiteral = [&](size_t until) {
+      if (until > consumed) {
+        writer.StartObject();
+        writer.Key("lit");
+        writer.String(result.output.data() + consumed, static_cast<rapidjson::SizeType>(until - consumed));
+        writer.EndObject();
+      }
+    };
+
+    for (const auto& span : result.ambiguities) {
+      writeLiteral(span.outputOffset);
+      writer.StartObject();
+      writer.Key("amb");
+      writer.StartObject();
+      writer.Key("t");
+      writer.String(result.output.data() + span.outputOffset, static_cast<rapidjson::SizeType>(span.outputLength));
+      writer.Key("s");
+      writer.Uint64(span.sourceIndex);
+      writer.EndObject();
+      writer.EndObject();
+      consumed = span.outputOffset + span.outputLength;
+    }
+    writeLiteral(result.output.size());
+
+    writer.EndArray();
+    it->second.ambiguities_json.assign(buffer.GetString(), buffer.GetSize());
+    return it->second.ambiguities_json.c_str();
+  } catch (const std::exception& ex) {
+    return throw_error(ex.what());
+  }
+#else
+  (void)handle;
+  (void)input;
+  return throw_error(
+      "opencc_convert_with_ambiguities: OPENCC_WASM_WITH_OPENCC not enabled");
 #endif
 }
 
