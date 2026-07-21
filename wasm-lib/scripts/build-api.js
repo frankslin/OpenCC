@@ -103,6 +103,7 @@ async function getApi() {
       convert: mod.cwrap("opencc_convert", "string", ["number", "string"]),
       inspect: mod.cwrap("opencc_inspect", "string", ["number", "string"]),
       candidates: mod.cwrap("opencc_convert_candidates", "string", ["number", "string"]),
+      ambiguities: mod.cwrap("opencc_convert_with_ambiguities", "string", ["number", "string"]),
       destroy: mod.cwrap("opencc_destroy", null, ["number"]),
     };
   }
@@ -318,6 +319,29 @@ function createCandidatesFn({ from, to, config, includeTofuRiskDictionaries }) {
   };
 }
 
+function createAmbiguitiesFn({ from, to, config, includeTofuRiskDictionaries }) {
+  let configName;
+
+  if (config) {
+    configName = config.endsWith(".json") ? config : \`\${config}.json\`;
+  } else if (from && to) {
+    configName = resolveConfig(from, to);
+  } else {
+    throw new Error('Either "config" or both "from" and "to" must be specified');
+  }
+
+  const includeTofu = includeTofuRiskDictionaries !== false;
+
+  return async (text) => {
+    if (configName === null) {
+      return [{ lit: text }];
+    }
+    const handle = await ensureConfig(configName, includeTofu);
+    const { api: apiFns } = await getApi();
+    return JSON.parse(apiFns.ambiguities(handle, text));
+  };
+}
+
 function CustomConverter(dictOrString) {
   let pairs = [];
   if (typeof dictOrString === "string") {
@@ -358,9 +382,11 @@ const OpenCC = {
     const fn = createConverter(opts);
     const inspect = createInspector(opts);
     const candidates = createCandidatesFn(opts);
+    const ambiguities = createAmbiguitiesFn(opts);
     const converter = (text) => fn(text);
     converter.inspect = (text) => inspect(text);
     converter.candidates = (word) => candidates(word);
+    converter.convertWithAmbiguities = (text) => ambiguities(text);
     return converter;
   },
   CustomConverter,

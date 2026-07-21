@@ -51,6 +51,27 @@ export interface InspectionResult {
   output: string;
 }
 
+export interface DefRecord {
+  /** Defines a source string referenced by subsequent amb records */
+  def: string;
+}
+
+export interface LitRecord {
+  /** Unambiguous literal output text */
+  lit: string;
+}
+
+export interface AmbRecord {
+  amb: {
+    /** The converted output text (default candidate) */
+    t: string;
+    /** The source index (referencing a previous def record) */
+    s: number;
+  };
+}
+
+export type AmbiguityRecord = DefRecord | LitRecord | AmbRecord;
+
 export interface ConverterFunction {
   (text: string): Promise<string>;
   inspect(text: string): Promise<InspectionResult>;
@@ -66,6 +87,15 @@ export interface ConverterFunction {
    *   Empty if no dictionary in the conversion chain contains `word`.
    */
   candidates(word: string): Promise<string[]>;
+
+  /**
+   * Converts the whole text and reports every output span whose dictionary
+   * match is one-to-many.
+   *
+   * @param text The text to convert.
+   * @returns The converted text segmented into def, lit, and amb records.
+   */
+  convertWithAmbiguities(text: string): Promise<AmbiguityRecord[]>;
 }
 
 /**
