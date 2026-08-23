@@ -67,6 +67,7 @@ function parseArgs(argv) {
     libraries: [...DEFAULT_LIBRARIES],
     configs: [...DEFAULT_CONFIGS],
     json: "",
+    includeTofu: false,
   };
 
   const takeValue = (arg, i) => {
@@ -106,6 +107,8 @@ function parseArgs(argv) {
         .map((item) => item.trim())
         .filter(Boolean);
       i = next;
+    } else if (arg === "--include-tofu") {
+      parsed.includeTofu = true;
     } else if (arg.startsWith("--json")) {
       const [value, next] = takeValue(arg, i);
       parsed.json = value || "";
@@ -142,6 +145,10 @@ Options:
                          Available: ${Object.keys(CONFIGS).join(", ")}
   --min-time-ms <ms>     Minimum measured time per benchmark (default: ${DEFAULT_MIN_TIME_MS})
   --warmup-time-ms <ms>  Warmup time per benchmark (default: ${DEFAULT_WARMUP_TIME_MS})
+  --include-tofu         Keep dictionaries marked may_output_tofu in opencc and
+                         opencc-wasm. Off by default so all three libraries run
+                         the same dictionary set: opencc-js has no such option
+                         and always behaves as if they were excluded.
   --json <file>          Also write the raw results as JSON
 `);
 }
@@ -194,7 +201,7 @@ function resolveLibrary(libId, resolveFrom) {
 // Adapters: every adapter exposes async create(configKey) -> async convert(text)
 // ---------------------------------------------------------------------------
 
-async function loadAdapter(resolved) {
+async function loadAdapter(resolved, includeTofu) {
   const url = pathToFileURL(resolved.entry).href;
   const mod = await import(url);
   const api = mod.default ?? mod;
@@ -202,13 +209,26 @@ async function loadAdapter(resolved) {
   if (resolved.kind === "native") {
     const OpenCC = api.OpenCC ?? mod.OpenCC;
     return (configKey) => {
-      const converter = new OpenCC(CONFIGS[configKey].config);
+      const converter = new OpenCC(CONFIGS[configKey].config, {
+        includeTofuRiskDictionaries: includeTofu,
+      });
       return async (text) => converter.convertSync(text);
     };
   }
 
-  // opencc-wasm and opencc-js share the same Converter({from, to}) surface.
   const Converter = api.Converter ?? mod.Converter;
+  if (resolved.kind === "wasm") {
+    return (configKey) => {
+      const convert = Converter({
+        config: CONFIGS[configKey].config,
+        includeTofuRiskDictionaries: includeTofu,
+      });
+      return async (text) => convert(text);
+    };
+  }
+
+  // opencc-js exposes no tofu-risk switch: its built-in converters always run
+  // the chain without the may_output_tofu dictionaries.
   return (configKey) => {
     const { from, to } = CONFIGS[configKey];
     const convert = Converter({ from, to });
@@ -248,7 +268,7 @@ async function runAdaptive(fn, minTimeMs, warmupTimeMs) {
 // ---------------------------------------------------------------------------
 
 async function runWorker(payload) {
-  const { libId, resolveFrom, configs, minTimeMs, warmupTimeMs } = payload;
+  const { libId, resolveFrom, configs, minTimeMs, warmupTimeMs, includeTofu } = payload;
   const resolved = resolveLibrary(libId, resolveFrom);
   if (!resolved) return { libId, available: false };
 
@@ -257,7 +277,7 @@ async function runWorker(payload) {
   const shortTextBytes = Buffer.byteLength(SHORT_TEXT, "utf8");
 
   const beforeLoadMs = performance.now();
-  const createConverter = await loadAdapter(resolved);
+  const createConverter = await loadAdapter(resolved, includeTofu);
   const loadMs = performance.now() - beforeLoadMs;
 
   const results = {
@@ -355,6 +375,10 @@ function report(args, results) {
   );
   console.log(`Short text: ${available[0]?.shortTextBytes ?? 0} bytes`);
   console.log(`Min time: ${args.minTimeMs} ms`);
+  console.log(
+    `Tofu-risk dictionaries: ${args.includeTofu ? "included" : "excluded"}` +
+      " (opencc-js always excludes them)"
+  );
 
   printTable(
     "Libraries",
@@ -419,7 +443,7 @@ function report(args, results) {
     for (const configKey of args.configs) {
       const sample = item.configs[configKey]?.sample;
       if (!sample) continue;
-      const key = `${configKey} ${sample}`;
+      const key = `${configKey} ${sample}`;
       if (!outputs.has(key)) outputs.set(key, { configKey, sample, libs: [] });
       outputs.get(key).libs.push(item.label);
     }
@@ -459,6 +483,7 @@ if (workerEnv) {
       configs: args.configs,
       minTimeMs: args.minTimeMs,
       warmupTimeMs: args.warmupTimeMs,
+      includeTofu: args.includeTofu,
     };
     const child = spawnSync(process.execPath, [__filename], {
       env: { ...process.env, OPENCC_BENCHMARK_WORKER: JSON.stringify(payload) },

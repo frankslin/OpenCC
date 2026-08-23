@@ -181,42 +181,59 @@ workload:
 * **Short text** — a 120-byte sentence, mean per call.
 * **RSS** — resident set size of the worker process after the run.
 
+Dictionaries marked `may_output_tofu` are **excluded** by default, because
+`opencc-js` has no switch for them and always runs the chain without them; the
+native and WASM libraries include them by default, so the benchmark turns them
+off to keep the three doing identical work. Pass `--include-tofu` to measure the
+library defaults instead. The report prints a sha256 prefix of each long-text
+output so any remaining divergence is visible next to the timings.
+
 ```
 node wasm-lib/scripts/benchmark-compare.mjs \
   --libs opencc,opencc-wasm,opencc-js --configs s2t,s2twp,t2s \
   --resolve-from <dir containing node_modules>
 ```
 
-Results from a Linux x64 container, Node v22.22.2, 2026-08-23, with
-`opencc@1.4.2`, `opencc-js@1.4.2` and `opencc-wasm` 0.13.2 (local build):
+Median of three runs on a Linux x64 container, Node v22.22.2, 2026-08-23, with
+`opencc@1.4.2`, `opencc-js@1.4.2` and `opencc-wasm` 0.13.2 (local build);
+run-to-run spread is roughly ±10%. All three produced byte-identical output for
+every conversion below.
 
 | Conversion | Library | Startup | Long text | Throughput | Short text |
 | --- | --- | ---: | ---: | ---: | ---: |
-| s2t | opencc (native) | 69.6 ms | 79.3 ms | 23.54 MB/s | 3.29 us |
-| s2t | opencc-wasm | 163.3 ms | 214.4 ms | 8.71 MB/s | 11.67 us |
-| s2t | opencc-js | 79.6 ms | 87.4 ms | 21.35 MB/s | 2.71 us |
-| s2twp | opencc (native) | 33.4 ms | 151.8 ms | 12.30 MB/s | 7.80 us |
-| s2twp | opencc-wasm | 100.4 ms | 392.7 ms | 4.75 MB/s | 23.47 us |
-| s2twp | opencc-js | 72.7 ms | 174.4 ms | 10.70 MB/s | 7.70 us |
-| t2s | opencc (native) | 2.7 ms | 22.4 ms | 83.36 MB/s | 2.21 us |
-| t2s | opencc-wasm | 10.1 ms | 169.5 ms | 11.01 MB/s | 13.08 us |
-| t2s | opencc-js | 2.6 ms | 42.7 ms | 43.67 MB/s | 1.57 us |
+| s2t | opencc (native) | 54.0 ms | 65.2 ms | 28.61 MB/s | 2.41 us |
+| s2t | opencc-wasm | 113.9 ms | 134.5 ms | 13.87 MB/s | 8.11 us |
+| s2t | opencc-js | 73.2 ms | 69.7 ms | 26.77 MB/s | 1.90 us |
+| s2twp | opencc (native) | 25.3 ms | 142.3 ms | 13.12 MB/s | 6.02 us |
+| s2twp | opencc-wasm | 80.1 ms | 273.1 ms | 6.83 MB/s | 16.71 us |
+| s2twp | opencc-js | 90.6 ms | 157.2 ms | 11.88 MB/s | 6.03 us |
+| t2s | opencc (native) | 2.3 ms | 17.1 ms | 108.93 MB/s | 1.56 us |
+| t2s | opencc-wasm | 6.4 ms | 101.3 ms | 18.43 MB/s | 9.21 us |
+| t2s | opencc-js | 2.8 ms | 36.6 ms | 51.00 MB/s | 1.33 us |
 
-Process RSS after the run: native 169 MB, opencc-wasm 132 MB, opencc-js 260 MB.
+Process RSS after the run: native ~169 MB, opencc-wasm ~132 MB, opencc-js ~260 MB.
 
 Notes:
 
-* The native addon is the fastest on every conversion. `opencc-js` is close behind
-  on the phrase-heavy chains (1.1–1.2x) and 2x slower on the character-only `t2s`;
-  the WASM build is 2.6–7.6x slower than native, with the gap widest on `t2s`,
-  where the per-call JS↔WASM UTF-8 copy of the whole input dominates the small
-  amount of conversion work.
-* Outputs are not identical across implementations, and the differences are
-  dictionary versions rather than algorithm bugs. On the long text, `opencc-wasm`
-  0.13.2 differs from `opencc@1.4.2` in 68 characters (mostly `范 -> 範`), because
-  the WASM package bundles newer dictionaries; `opencc-js@1.4.2` differs from the
-  native `t2s` output in 71 characters, all rare Ext-B forms such as `𫚋 -> 鱄`
-  that come from the extension dictionaries it does not bundle.
-* `opencc-wasm` releases up to and including 0.13.1 abort with
+* The native addon is fastest overall. `opencc-js` is within 10–30% of it on the
+  phrase-heavy chains — and slightly ahead on short `s2t` strings, where it has no
+  language boundary to cross — but 2.1x slower on the character-only `t2s`.
+* The WASM build is 2–6x slower than native. The gap is widest on `t2s`, where
+  the conversion itself is cheap and the per-call UTF-8 copy of the whole input
+  across the JS↔WASM boundary dominates.
+* Output equality depends on two settings that are easy to get wrong when
+  comparing implementations:
+  * **Tofu-risk dictionaries.** `t2s`, `tw2s`, `hk2s` and their `p` variants put
+    `TSCharactersExt` (marked `may_output_tofu`) ahead of `TSCharacters`. With it
+    included — the library default for `opencc` and `opencc-wasm` — the long text
+    gains 71 rare Ext-B forms such as `鱄 -> 𫚋`. `opencc-js` has no equivalent
+    option and matches the excluded (command-line default) behaviour.
+  * **Bundled dictionary freshness.** `opencc-wasm` 0.13.1 and earlier shipped
+    `.ocd2` assets that predated the checked-in text dictionaries — `STPhrases`,
+    `TWPhrases(Rev)`, `TWVariants(Rev)`, `TWVariantsRevPhrases`, `HKPhrases(Rev)`
+    and `STPhrases_GeneratedFromRegionalPhrases` — so e.g. `范氏` converted to
+    `範氏` instead of staying `范氏`. Fixed in 0.13.2 by regenerating the assets;
+    they are now byte-identical to the ones shipped in `opencc@1.4.2`.
+* `opencc-wasm` releases up to and including 0.13.1 also abort with
   `RuntimeError: memory access out of bounds` on inputs larger than about 64 KiB,
-  so this comparison cannot be reproduced against those versions; 0.13.2 fixes it.
+  so this comparison cannot be reproduced against those versions.
