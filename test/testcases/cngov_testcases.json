@@ -49,6 +49,36 @@
         "t2cngov_jieba": "一乾二净",
         "t2s_cngov": "一干二净"
       }
+    },
+    {
+      "id": "cngov_006",
+      "description": "Extra-standard variant characters added in Transformer(1.4.x)",
+      "input": "㑹𫠦",
+      "expected": {
+        "t2cngov": "會所",
+        "t2cngov_jieba": "會所",
+        "t2cngov_keep_simp": "會所",
+        "t2cngov_keep_simp_jieba": "會所",
+        "t2s_cngov": "会所"
+      }
+    },
+    {
+      "id": "cngov_007",
+      "description": "Phrase-level 沖/衝 distinction (道沖 from TGPhrases)",
+      "input": "道沖",
+      "expected": {
+        "t2cngov": "道衝",
+        "t2cngov_jieba": "道衝",
+        "t2s_cngov": "道冲"
+      }
+    },
+    {
+      "id": "cngov_008",
+      "description": "Simplified-to-standard phrase 授时历 (STPhrases)",
+      "input": "授时历",
+      "expected": {
+        "s2t_cngov": "授時曆"
+      }
     }
   ]
 }

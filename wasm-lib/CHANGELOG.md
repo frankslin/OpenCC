@@ -5,6 +5,11 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-08-22
+
+- **CN Government Standard dictionary sync**: Updated the bundled cngov dictionaries to `Transformer(1.4.1)` (`b377473`, previously `Transformer(1.3.11)`), covering upstream releases 1.3.12, 1.4.0, and 1.4.1. The bulk of the change is a large batch of 表外異體字 (extra-standard variant characters) added to `TGCharacters`, `TGCharacters_keep_simp`, and `TSCharacters` — e.g. `㑹 -> 會 / 会` and `𫠦 -> 所` — plus new `STPhrases` entries for 曆/歷, 斗/鬥, 里/裏, 范/範, 咸/鹹, 岳/嶽, 沈/瀋 and similar phrase-level distinctions (`授时历 -> 授時曆`, `沈馆录 -> 瀋館録`), a 沖/衝 phrase set in `TGPhrases` (`道沖 -> 道衝`), and `谷神` becoming a multi-candidate entry (`谷神 穀神`) instead of always converting to `穀神`. Configs are unchanged; the affected `.ocd2` assets were regenerated and verified byte-identical to a fresh Bazel build.
+- **Tests**: Added cngov regression cases covering the new extra-standard variants, the `道沖` phrase, and `授时历 -> 授時曆`.
+
 ## [0.13.0] - 2026-07-14
 
 - **Candidate list API**: `OpenCC.Converter().candidates(word)` enumerates every candidate form OpenCC's conversion chain produces for a single word (e.g. `s2t` on `里` yields `["裏", "里", "哩"]`), for input-method-style candidate lists. Unlike calling the converter itself, `word` is treated as one indivisible word rather than arbitrary multi-word text; a word not covered by any dictionary in the chain returns an empty array. Backed by a new `SimpleConverter::GetConversionCandidates` method in the native OpenCC C++ API (added without an ABI bump, since `SimpleConverter` is a PImpl facade with no virtual methods) and a new `opencc_convert_candidates` WASM entry point.
