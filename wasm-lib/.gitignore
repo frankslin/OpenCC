@@ -8,6 +8,13 @@ node_modules/
 build/
 
 # Dist outputs (keep in git for npm package)
+# ...except the conversion assets, which are generated: `npm run refresh-assets`
+# rebuilds data/ from data/dictionary + data/config via Bazel and mirrors it into
+# dist/data/. Committing them let the checked-in copies silently go stale against
+# the dictionary sources. The published package is unaffected: prepack runs the
+# same refresh before packing.
+/data/
+/dist/data/
 
 # Logs
 *.log

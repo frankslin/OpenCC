@@ -387,13 +387,29 @@ npm run build
 npm test
 ```
 
-執行上游 OpenCC 測試案例來驗證 WASM 建置。
+執行上游 OpenCC 測試案例來驗證 WASM 建置。`pretest` 會先重新生成資產（見下），
+確保測試跑的是當前的字典來源，而非過期的副本。
+
+### 生成資產
+
+`data/` 與 `dist/data/` **不納入版本控制**，而是從 `data/dictionary`、
+`data/config` 與 cppjieba 資源重新生成：
+
+```bash
+npm run refresh-assets   # 需要 Bazel
+```
+
+這會用 Bazel 編譯 `.ocd2` 字典、複製並改寫設定 JSON、更新測試資料，最後鏡像到
+`dist/data/`。全新 clone 在執行前不會有 `data/` 目錄；`npm test` 與
+`npm run build` 都會自動呼叫它。發佈不受影響：`prepack` 會在打包前跑同一套
+refresh，因此 npm tarball 一律附帶重新建置的資產。
 
 ## 📁 專案結構
 
 ```
 wasm-lib/
 ├── build/              ← 中間產物（gitignored）
+├── data/               ← 生成的設定檔 + 字典（gitignored）
 ├── dist/               ← 可發佈版本（已提交）
 │   ├── esm/
 │   │   ├── index.js
@@ -403,7 +419,7 @@ wasm-lib/
 │   │   ├── index.cjs
 │   │   ├── opencc-wasm.cjs
 │   │   └── opencc-wasm.wasm
-│   └── data/           ← OpenCC 設定檔 + 字典
+│   └── data/           ← OpenCC 設定檔 + 字典（gitignored）
 ├── index.js            ← 原始碼 API
 ├── index.d.ts          ← TypeScript 型別定義
 └── scripts/

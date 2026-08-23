@@ -421,13 +421,31 @@ Runs both stages automatically.
 npm test
 ```
 
-Runs the upstream OpenCC test cases against the WASM build.
+Runs the upstream OpenCC test cases against the WASM build. `pretest` refreshes
+the generated assets first (see below), so tests always run against the current
+dictionary sources rather than a stale copy.
+
+### Generated assets
+
+`data/` and `dist/data/` are **not committed** — they are rebuilt from
+`data/dictionary`, `data/config`, and the cppjieba resources:
+
+```bash
+npm run refresh-assets   # requires Bazel
+```
+
+This compiles the `.ocd2` dictionaries via Bazel, copies and rewrites the config
+JSON, refreshes the test fixtures, and mirrors everything into `dist/data/`. A
+fresh clone has no `data/` until this runs; `npm test` and `npm run build` both
+invoke it automatically. Publishing is unaffected: `prepack` runs the same
+refresh before packing, so the npm tarball always ships freshly built assets.
 
 ## 📁 Project Structure
 
 ```
 wasm-lib/
 ├── build/              ← Intermediate WASM artifacts (gitignored)
+├── data/               ← Generated configs + dicts (gitignored)
 ├── dist/               ← Publishable distribution (committed)
 │   ├── esm/
 │   │   ├── index.js
@@ -437,7 +455,7 @@ wasm-lib/
 │   │   ├── index.cjs
 │   │   ├── opencc-wasm.cjs
 │   │   └── opencc-wasm.wasm
-│   └── data/           ← OpenCC configs + dicts
+│   └── data/           ← OpenCC configs + dicts (gitignored)
 ├── index.js            ← Source API
 ├── index.d.ts          ← TypeScript definitions
 └── scripts/

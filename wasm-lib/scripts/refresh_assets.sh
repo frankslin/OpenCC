@@ -143,4 +143,14 @@ JIEBA_CASE_DST="${ROOT}/test/jieba_comparison_testcases.json"
 echo "Copying jieba_comparison_testcases.json from ${JIEBA_CASE_SRC} -> ${JIEBA_CASE_DST}"
 install -m 644 "${JIEBA_CASE_SRC}" "${JIEBA_CASE_DST}"
 
+# Mirror the refreshed data/ into dist/data/ so the published-layout entry points
+# (dist/esm, dist/cjs, and the CDN tests) resolve the same assets without needing
+# a full Emscripten build. build-api.js repeats this copy during a real build.
+DIST_DATA_DST="${ROOT}/dist/data"
+echo "Mirroring ${ROOT}/data -> ${DIST_DATA_DST}"
+mkdir -p "$(dirname "${DIST_DATA_DST}")"
+chmod -R u+w "${DIST_DATA_DST}" 2>/dev/null || true
+rm -rf "${DIST_DATA_DST}"
+cp -R "${ROOT}/data" "${DIST_DATA_DST}"
+
 echo "Done."
