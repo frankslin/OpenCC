@@ -5,6 +5,12 @@ All notable changes to opencc-wasm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2026-08-23
+
+- **Large input fix**: `Converter()`, `inspect()`, `candidates()` and `convertWithAmbiguities()` no longer abort with `RuntimeError: memory access out of bounds` on inputs larger than about 64 KiB. Text arguments were declared as `cwrap` `"string"` parameters, which marshal the string onto the WASM stack (64 KiB by default); they are now copied onto the WASM heap with `_malloc`/`_free` instead. Applies to the ESM source, the CommonJS shim, and the generated `dist/` bundles; no WASM rebuild required.
+- **Tests**: Added regression cases converting ~740 KB and ~420 KB inputs through `convert()` and `inspect()`.
+- **Benchmark**: Added `npm run benchmark:compare` (`scripts/benchmark-compare.mjs`), which measures `opencc`, `opencc-wasm` and `opencc-js` on identical workloads (startup, 1.8 MB long text, short-string latency, RSS) in separate processes and reports output hashes so dictionary differences are visible alongside the timings.
+
 ## [0.13.1] - 2026-08-22
 
 - **CN Government Standard dictionary sync**: Updated the bundled cngov dictionaries to `Transformer(1.4.1)` (`b377473`, previously `Transformer(1.3.11)`), covering upstream releases 1.3.12, 1.4.0, and 1.4.1. The bulk of the change is a large batch of 表外異體字 (extra-standard variant characters) added to `TGCharacters`, `TGCharacters_keep_simp`, and `TSCharacters` — e.g. `㑹 -> 會 / 会` and `𫠦 -> 所` — plus new `STPhrases` entries for 曆/歷, 斗/鬥, 里/裏, 范/範, 咸/鹹, 岳/嶽, 沈/瀋 and similar phrase-level distinctions (`授时历 -> 授時曆`, `沈馆录 -> 瀋館録`), a 沖/衝 phrase set in `TGPhrases` (`道沖 -> 道衝`), and `谷神` becoming a multi-candidate entry (`谷神 穀神`) instead of always converting to `穀神`. Configs are unchanged; the affected `.ocd2` assets were regenerated and verified byte-identical to a fresh Bazel build.

@@ -1,6 +1,6 @@
 {
   "name": "opencc-wasm",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "WebAssembly backend for OpenCC with opencc-js compatible API and official configs/ocd2 dictionaries.",
   "keywords": [
     "opencc",
@@ -38,6 +38,7 @@
     "build": "npm run refresh-assets && ./build.sh && node scripts/build-api.js",
     "prepack": "npm run build",
     "benchmark": "node scripts/benchmark.mjs",
+    "benchmark:compare": "node scripts/benchmark-compare.mjs",
     "test": "npm run test:core && npm run test:cjs && npm run test:cdn",
     "test:core": "node --test test/opencc.test.js",
     "test:cjs": "node --test test/require.test.cjs",

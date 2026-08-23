@@ -37,13 +37,37 @@ async function getModule() {
 async function getApi() {
   const mod = await getModule();
   if (!api) {
-    api = {
+    // Text arguments are copied onto the WASM heap with _malloc instead of being
+    // declared as cwrap "string" parameters. cwrap marshals string arguments on
+    // the WASM stack (64 KiB by default), so any input larger than the stack
+    // aborted the module with "memory access out of bounds".
+    const raw = {
       create: mod.cwrap("opencc_create", "number", ["string"]),
-      convert: mod.cwrap("opencc_convert", "string", ["number", "string"]),
-      inspect: mod.cwrap("opencc_inspect", "string", ["number", "string"]),
-      candidates: mod.cwrap("opencc_convert_candidates", "string", ["number", "string"]),
-      ambiguities: mod.cwrap("opencc_convert_with_ambiguities", "string", ["number", "string"]),
+      convert: mod.cwrap("opencc_convert", "number", ["number", "number"]),
+      inspect: mod.cwrap("opencc_inspect", "number", ["number", "number"]),
+      candidates: mod.cwrap("opencc_convert_candidates", "number", ["number", "number"]),
+      ambiguities: mod.cwrap("opencc_convert_with_ambiguities", "number", ["number", "number"]),
       destroy: mod.cwrap("opencc_destroy", null, ["number"]),
+    };
+    const withHeapString = (fn) => (handle, text) => {
+      const input = String(text);
+      const bytes = mod.lengthBytesUTF8(input) + 1;
+      const ptr = mod._malloc(bytes);
+      if (!ptr) throw new Error("opencc-wasm: failed to allocate " + bytes + " bytes");
+      try {
+        mod.stringToUTF8(input, ptr, bytes);
+        return mod.UTF8ToString(fn(handle, ptr));
+      } finally {
+        mod._free(ptr);
+      }
+    };
+    api = {
+      create: raw.create,
+      convert: withHeapString(raw.convert),
+      inspect: withHeapString(raw.inspect),
+      candidates: withHeapString(raw.candidates),
+      ambiguities: withHeapString(raw.ambiguities),
+      destroy: raw.destroy,
     };
   }
   return { mod, api };

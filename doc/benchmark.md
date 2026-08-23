@@ -166,3 +166,57 @@ BM_Convert/s2twp_jieba_1000          15.0 ms         15.0 ms           48 bytes_
 BM_Convert/s2twp_jieba_10000          153 ms          153 ms            5 bytes_per_second=2.73681M/s
 BM_Convert/s2twp_jieba_100000        1728 ms         1728 ms            1 bytes_per_second=2.47784M/s
 ```
+
+## JavaScript implementations: `opencc` vs `opencc-wasm` vs `opencc-js`
+
+Run with `wasm-lib/scripts/benchmark-compare.mjs` (`npm run benchmark:compare` from
+`wasm-lib/`). Every library is measured in its own child process, on the same
+workload:
+
+* **Startup** — module load, dictionary load and the first conversion. Only the
+  first configuration measured in a process pays the module-load cost; later
+  configurations reuse the initialised runtime.
+* **Long text** — `test/benchmark/zuozhuan.txt` (1,866,473 bytes), mean of an
+  adaptive loop.
+* **Short text** — a 120-byte sentence, mean per call.
+* **RSS** — resident set size of the worker process after the run.
+
+```
+node wasm-lib/scripts/benchmark-compare.mjs \
+  --libs opencc,opencc-wasm,opencc-js --configs s2t,s2twp,t2s \
+  --resolve-from <dir containing node_modules>
+```
+
+Results from a Linux x64 container, Node v22.22.2, 2026-08-23, with
+`opencc@1.4.2`, `opencc-js@1.4.2` and `opencc-wasm` 0.13.2 (local build):
+
+| Conversion | Library | Startup | Long text | Throughput | Short text |
+| --- | --- | ---: | ---: | ---: | ---: |
+| s2t | opencc (native) | 69.6 ms | 79.3 ms | 23.54 MB/s | 3.29 us |
+| s2t | opencc-wasm | 163.3 ms | 214.4 ms | 8.71 MB/s | 11.67 us |
+| s2t | opencc-js | 79.6 ms | 87.4 ms | 21.35 MB/s | 2.71 us |
+| s2twp | opencc (native) | 33.4 ms | 151.8 ms | 12.30 MB/s | 7.80 us |
+| s2twp | opencc-wasm | 100.4 ms | 392.7 ms | 4.75 MB/s | 23.47 us |
+| s2twp | opencc-js | 72.7 ms | 174.4 ms | 10.70 MB/s | 7.70 us |
+| t2s | opencc (native) | 2.7 ms | 22.4 ms | 83.36 MB/s | 2.21 us |
+| t2s | opencc-wasm | 10.1 ms | 169.5 ms | 11.01 MB/s | 13.08 us |
+| t2s | opencc-js | 2.6 ms | 42.7 ms | 43.67 MB/s | 1.57 us |
+
+Process RSS after the run: native 169 MB, opencc-wasm 132 MB, opencc-js 260 MB.
+
+Notes:
+
+* The native addon is the fastest on every conversion. `opencc-js` is close behind
+  on the phrase-heavy chains (1.1–1.2x) and 2x slower on the character-only `t2s`;
+  the WASM build is 2.6–7.6x slower than native, with the gap widest on `t2s`,
+  where the per-call JS↔WASM UTF-8 copy of the whole input dominates the small
+  amount of conversion work.
+* Outputs are not identical across implementations, and the differences are
+  dictionary versions rather than algorithm bugs. On the long text, `opencc-wasm`
+  0.13.2 differs from `opencc@1.4.2` in 68 characters (mostly `范 -> 範`), because
+  the WASM package bundles newer dictionaries; `opencc-js@1.4.2` differs from the
+  native `t2s` output in 71 characters, all rare Ext-B forms such as `𫚋 -> 鱄`
+  that come from the extension dictionaries it does not bundle.
+* `opencc-wasm` releases up to and including 0.13.1 abort with
+  `RuntimeError: memory access out of bounds` on inputs larger than about 64 KiB,
+  so this comparison cannot be reproduced against those versions; 0.13.2 fixes it.

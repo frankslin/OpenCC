@@ -183,3 +183,25 @@ test("[ambiguities] no-op locale pair returns literal text", async () => {
     { lit: "大战文丑" }
   ]);
 });
+
+// Text arguments used to be marshalled through the 64 KiB WASM stack, so any
+// input larger than the stack aborted with "memory access out of bounds".
+test("[large input] converts text far beyond the WASM stack size", async () => {
+  const convert = getConverter("s2twp.json");
+  const unit = "鼠标里面的硅二极管坏了。\n";
+  const input = unit.repeat(20000); // ~740 KB of UTF-8
+  assert.ok(Buffer.byteLength(input, "utf8") > 512 * 1024);
+
+  const output = await convert(input);
+  const expectedUnit = await convert(unit);
+  assert.strictEqual(output, expectedUnit.repeat(20000));
+});
+
+test("[large input] inspect and candidates accept oversized input", async () => {
+  const convert = getConverter("s2t.json");
+  const input = "开放中文转换。".repeat(20000); // ~420 KB of UTF-8
+  assert.ok(Buffer.byteLength(input, "utf8") > 64 * 1024);
+
+  const inspection = await convert.inspect(input);
+  assert.strictEqual(inspection.output, await convert(input));
+});
