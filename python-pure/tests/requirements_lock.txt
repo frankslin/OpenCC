@@ -1,6 +1,6 @@
 exceptiongroup==1.2.2
 iniconfig==2.0.0
-opencc-data==1.4.1
+opencc-data==1.4.2
 packaging==24.1
 pluggy==1.5.0
 pygments==2.20.0

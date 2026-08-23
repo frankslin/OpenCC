@@ -9,7 +9,7 @@ _readme_files = (
     os.path.join(_this_dir, 'README.md'),
     os.path.join(_this_dir, 'README.zh-TW.md'),
 )
-OPENCC_DATA_VERSION = '1.4.1'
+OPENCC_DATA_VERSION = '1.4.2'
 
 
 def _read_readme_for_pkg_info(path):
@@ -41,6 +41,11 @@ setuptools.setup(
     long_description=get_long_description(),
     long_description_content_type='text/markdown',
     url='https://github.com/BYVoid/OpenCC',
+    project_urls={
+        'Homepage': 'https://github.com/BYVoid/OpenCC',
+        'Source': 'https://github.com/BYVoid/OpenCC/tree/master/python-pure',
+        'Changelog': 'https://github.com/BYVoid/OpenCC/blob/master/NEWS.md',
+    },
     license='Apache-2.0',
     license_files=['LICENSE'],
 

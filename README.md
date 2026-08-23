@@ -314,7 +314,7 @@ The following ports are maintained within the OpenCC ecosystem and are generally
 * Pure JavaScript: [opencc-js](https://www.npmjs.com/package/opencc-js)
     * See [notes about different OpenCC NPM packages](#links-%E7%9B%B8%E9%97%9C%E9%80%A3%E7%B5%90) below.
 * WebAssembly: [opencc-wasm](https://www.npmjs.com/package/opencc-wasm) ([website](https://opencc.js.org/))
-* Pure Python: [opencc-py](https://pypi.org/project/opencc-py/) (pre-release)
+* Pure Python: [opencc-py](https://pypi.org/project/opencc-py/)
 
 ### Other Ports (Unofficial)
 

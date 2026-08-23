@@ -51,6 +51,11 @@ python -m pip install .
 python -m pip install -e .
 ```
 
+## 變更紀錄
+
+各版本的變更紀錄維護於 OpenCC 的 NEWS.md：
+https://github.com/BYVoid/OpenCC/blob/master/NEWS.md
+
 ## 支援的 Configs
 
 `opencc.CONFIGS` 由 `opencc-data` 提供的 configs 產生。

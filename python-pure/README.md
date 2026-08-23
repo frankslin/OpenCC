@@ -54,6 +54,11 @@ Or use editable development mode:
 python -m pip install -e .
 ```
 
+## Changelog
+
+Release notes are maintained in OpenCC's NEWS.md:
+https://github.com/BYVoid/OpenCC/blob/master/NEWS.md
+
 ## Supported Configs
 
 `opencc.CONFIGS` is populated from the configs exposed by `opencc-data`.
